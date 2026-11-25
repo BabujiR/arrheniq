@@ -6,7 +6,8 @@ import react from '@vitejs/plugin-react';
  * so the browser sees one origin (ADR 0006): the session cookie, the CSRF cookie and the OIDC redirect URI
  * (http://localhost:5173/login/oauth2/code/arrheniq, allowed in the Keycloak dev realm) all just work.
  */
-const backend = 'http://localhost:8080';
+// 127.0.0.1, not localhost: Node resolves localhost to ::1 (IPv6) first, the backend may listen on IPv4 only
+const backend = 'http://127.0.0.1:8080';
 const proxied = { target: backend, changeOrigin: false };
 
 export default defineConfig({
