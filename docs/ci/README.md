@@ -69,3 +69,16 @@ flowchart LR
 - Every workflow uses least-privilege `permissions:`, `concurrency` to cancel superseded runs, and timeouts.
 - Logic lives in versioned scripts (`scripts/ci/*`) so it can be run and debugged locally. Workflows stay thin.
 - Test reports and evidence artifacts are retained for 90 days in CI. Released evidence packs are archived permanently with the release (validation record).
+
+## Dependency security overrides
+
+Versions we pin above what the Spring Boot BOM manages, because a CVE fix was released before Spring Boot picked it up.
+Review at every Spring Boot upgrade: when the BOM manages the fixed version (or newer), **delete the override**.
+Check with `.\mvnw.cmd -pl app dependency:tree "-Dincludes=<groupId>"`.
+
+| Pin (in `backend/pom.xml` unless noted) | Boot 4.2.0 gives | CVEs | Scope | Added | Remove when |
+|---|---|---|---|---|---|
+| `tomcat.version` 11.0.29 | 11.0.27 | 8 (Tomcat security-11 page, fixed in 11.0.29) | runtime | 2026-11-25 | BOM ≥ 11.0.29; move to 11.0.30 when released (CVE-2026-133325, cluster TLS-PSK, not used by us) |
+| `postgresql.version` 42.7.15 | 42.7.14 | CVE-2026-134841…134848 | runtime | 2026-11-25 | BOM ≥ 42.7.15 |
+| `commons-codec.version` 1.23.0 | 1.22.1 | CVE-2026-119078, CVE-2026-124077 | test | 2026-11-25 | BOM ≥ 1.23.0 |
+| `app/pom.xml`: exclude `com.vaadin.external.google:android-json`, add `org.json:json` 20260814 (test) | android-json 0.0.20131108 | CVE-2026-110974 (no fix will be released) | test | 2026-11-25 | Spring Boot drops android-json from `spring-boot-starter-test` |
