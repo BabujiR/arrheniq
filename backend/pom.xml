@@ -15,7 +15,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <!-- Spring Boot 4.1 line (GA 2026-06-10). Keep on the latest 4.1.x patch. -->
-        <version>4.1.0</version>
+        <version>4.2.0</version>
         <relativePath/>
     </parent>
 
@@ -36,7 +36,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Spring Modulith 2.1.x is the line built against Spring Boot 4.1 -->
-        <spring-modulith.version>2.1.1</spring-modulith.version>
+        <spring-modulith.version>2.2.0</spring-modulith.version>
     </properties>
 
     <dependencyManagement>
