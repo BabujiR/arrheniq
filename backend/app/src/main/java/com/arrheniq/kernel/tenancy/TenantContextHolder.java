@@ -1,6 +1,7 @@
 package com.arrheniq.kernel.tenancy;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Holds the {@link TenantContext} for the current thread (virtual threads: one per request).
@@ -27,10 +28,18 @@ public final class TenantContextHolder {
     }
 
     public static void runAs(TenantContext context, Runnable work) {
+        callAs(context, () -> {
+            work.run();
+            return null;
+        });
+    }
+
+    /** Runs {@code work} with {@code context} bound and returns its result; restores the previous context. */
+    public static <T> T callAs(TenantContext context, Supplier<T> work) {
         TenantContext previous = CURRENT.get();
         CURRENT.set(context);
         try {
-            work.run();
+            return work.get();
         } finally {
             if (previous == null) {
                 CURRENT.remove();

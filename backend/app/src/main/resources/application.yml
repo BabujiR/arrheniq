@@ -19,6 +19,13 @@ spring:
     locations: classpath:db/migration
     validate-migration-naming: true
     clean-disabled: true
+  session:
+    # Spring Session JDBC (ADR 0006); tables created by Flyway V2, never by Spring
+    jdbc:
+      table-name: platform.spring_session
+      initialize-schema: never
+  # OIDC client registration "arrheniq" comes from the environment (cloud: Cognito; private: customer IdP),
+  # e.g. SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_ARRHENIQ_CLIENT_ID; see application-local.yml for the shape.
   jpa:
     open-in-view: false
     hibernate:
@@ -30,6 +37,24 @@ spring:
 
 server:
   shutdown: graceful
+  servlet:
+    session:
+      timeout: 60m                 # fallback; set per login from tenant setting session.logoff_minutes
+      cookie:
+        name: ARQSESSION
+        http-only: true
+        secure: true
+        same-site: lax
+
+arrheniq:
+  security:
+    registration-id: arrheniq
+    base-domain: ${ARQ_BASE_DOMAIN:}
+    fixed-tenant-slug: ${ARQ_FIXED_TENANT:}
+    absolute-session-lifetime: 12h
+    reauth-flow-timeout: 10m
+    reauth-max-age: 5m
+    post-login-path: /
   error:
     include-stacktrace: never
     include-message: never

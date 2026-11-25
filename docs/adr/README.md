@@ -19,5 +19,6 @@
 | [0015](0015-validation-as-code-requirement-tagged-tests.md) | Validation as code: requirement-tagged tests generate traceability and OQ evidence | Accepted (pending review) |
 | [0016](0016-e-signature-binding-to-record-content-hash-with.md) | E-signature binding to record content hash with IdP re-authentication | Accepted (pending review) |
 | [0017](0017-maven-multi-module-build-for-the-backend.md) | Maven multi-module build for the backend | Accepted |
+| [0018](0018-browser-login-user-matching-and-per-request-authorization.md) | Browser login, user matching and per-request authorization | Accepted (pending review) |
 
 Template: Context → Decision → Consequences → Alternatives. A superseded ADR is never deleted; it's marked *Superseded by ADR nnnn*.
