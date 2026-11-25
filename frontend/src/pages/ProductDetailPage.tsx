@@ -119,7 +119,7 @@ export function ProductDetailPage() {
     <Stack>
       <Group justify="space-between">
         <Group wrap="nowrap" align="flex-start">
-          <ThemeIcon size={42} radius="md" variant="light" color="indigo" className="arq-pop">
+          <ThemeIcon size={42} radius="md" variant="light" color="arqIndigo" className="arq-pop">
             <IconProduct size={24} />
           </ThemeIcon>
           <Stack gap={2}>

@@ -10,7 +10,7 @@ interface Props {
 }
 
 /** Page title with its icon and one line saying what the page is for. */
-export function PageHeader({ icon, title, description, color = 'indigo', actions }: Props) {
+export function PageHeader({ icon, title, description, color = 'arqIndigo', actions }: Props) {
   return (
     <Group justify="space-between" align="flex-start" mb="md" wrap="wrap" gap="md">
       <Group gap="sm" wrap="nowrap" align="flex-start">

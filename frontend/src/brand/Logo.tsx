@@ -9,28 +9,34 @@ interface Props {
 }
 
 /**
- * ArrheniQ mark: a flask with a stability (degradation) curve and a measurement point, a nod to the
- * Arrhenius equation that the name comes from. Pure SVG; colours follow the Mantine theme.
+ * ArrheniQ "Q-Curve" mark: a Q whose tail is a stability (degradation) curve that falls steeply, levels off
+ * and ends in a measurement point. The knockout behind the tail uses the page background, so the mark works
+ * in light and dark mode. Brand sheet and assets: docs/brand/README.md.
  */
 export function Logo({ size = 32, motion = 'still', withWordmark = true }: Props) {
   const className = `arq-logo${motion === 'still' ? '' : ` arq-logo--${motion}`}`;
   return (
-    <Group gap={8} wrap="nowrap" className={className} aria-label="ArrheniQ">
-      <svg width={size} height={size} viewBox="0 0 48 48" role="img" aria-hidden={withWordmark}>
+    <Group gap={Math.round(size / 4)} wrap="nowrap" className={className} aria-label="ArrheniQ">
+      <svg width={size} height={size} viewBox="0 0 72 72" role="img" aria-hidden={withWordmark}>
         <title>ArrheniQ</title>
-        <g className="arq-logo__flask" fill="none" stroke="var(--mantine-color-indigo-6)" strokeWidth="3"
-           strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 5h12" />
-          <path d="M20 5v12L8.5 37.5A4 4 0 0 0 12 43h24a4 4 0 0 0 3.5-5.5L28 17V5" />
-        </g>
-        <path className="arq-logo__curve" d="M17 25c3.5 0 5.5 4.6 9 8.2s5.2 4.8 8.6 4.8" fill="none"
-              stroke="var(--mantine-color-teal-5)" strokeWidth="3" strokeLinecap="round" />
-        <circle className="arq-logo__dot" cx="34.6" cy="38" r="2.6" fill="var(--mantine-color-teal-6)" />
+        <circle className="arq-logo__ring" cx="32" cy="32" r="21" fill="none" stroke="var(--arq-brand-indigo)"
+                strokeWidth="7.5" />
+        <path d="M30 27C35 39 43 49 56.5 52" fill="none" stroke="var(--mantine-color-body)" strokeWidth="13"
+              strokeLinecap="round" />
+        <path className="arq-logo__curve" d="M30 27C35 39 43 49 56.5 52" fill="none" stroke="var(--arq-brand-teal)"
+              strokeWidth="7.5" strokeLinecap="round" />
+        <circle className="arq-logo__dot" cx="64.5" cy="53" r="4.6" fill="var(--arq-brand-teal)" />
       </svg>
       {withWordmark && (
-        <Text fw={700} size={size >= 40 ? 'xl' : 'lg'} style={{ letterSpacing: 0.2 }}>
+        <Text
+          ff="var(--arq-font-brand)"
+          fw={600}
+          fz={Math.max(16, Math.round(size * 0.62))}
+          lh={1}
+          style={{ letterSpacing: '-0.015em' }}
+        >
           Arrheni
-          <Text span inherit c="teal.6">
+          <Text span inherit c="var(--arq-brand-teal)">
             Q
           </Text>
         </Text>

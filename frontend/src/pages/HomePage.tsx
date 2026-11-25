@@ -59,7 +59,7 @@ export function HomePage() {
                     onClick={() => void navigate({ to: '/products' })} />
           <StatCard label="Approved products" value={count('APPROVED')} icon={<IconApproved size={22} />} color="teal"
                     loading={loading} onClick={() => void navigate({ to: '/products' })} />
-          <StatCard label="Active tests" value={tests.data?.length ?? 0} icon={<IconTest size={22} />} color="indigo"
+          <StatCard label="Active tests" value={tests.data?.length ?? 0} icon={<IconTest size={22} />} color="arqIndigo"
                     loading={loading} onClick={() => void navigate({ to: '/test-methods' })} />
         </SimpleGrid>
       )}
@@ -100,7 +100,7 @@ export function HomePage() {
         )}
 
         <Card withBorder radius="md" className="arq-fade-in">
-          <CardTitle icon={<IconPlus />} color="indigo" title="Quick actions" />
+          <CardTitle icon={<IconPlus />} color="arqIndigo" title="Quick actions" />
           <Group>
             {can('product.manage') && (
               <Button leftSection={<IconProduct />} variant="light"

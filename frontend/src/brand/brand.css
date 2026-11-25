@@ -3,6 +3,17 @@
  * operating system asks for reduced motion (accessibility; WCAG 2.3.3).
  */
 
+/* brand tokens (docs/brand/README.md); teal is lighter in dark mode to keep contrast */
+:root {
+  --arq-brand-indigo: #2e3192;
+  --arq-brand-teal: #0ca678;
+  --arq-font-brand: 'Space Grotesk', Inter, system-ui, sans-serif;
+}
+[data-mantine-color-scheme='dark'] {
+  --arq-brand-indigo: #c5c8ff;
+  --arq-brand-teal: #38d9a9;
+}
+
 /* logo: the stability curve draws itself, the "measurement" dot pulses */
 .arq-logo__curve {
   stroke-dasharray: 64;
@@ -21,7 +32,7 @@
   transform-origin: center;
   animation: arq-pulse 1.8s ease-in-out infinite;
 }
-.arq-logo--draw .arq-logo__flask {
+.arq-logo--draw .arq-logo__ring {
   animation: arq-fade 0.5s ease-out both;
 }
 

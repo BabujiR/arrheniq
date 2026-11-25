@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72" role="img" aria-label="ArrheniQ">
+  <rect width="72" height="72" fill="#14152B"/>
+  <circle cx="32" cy="32" r="21" fill="none" stroke="#FFFFFF" stroke-width="7.5"/>
+  <path d="M30 27C35 39 43 49 56.5 52" fill="none" stroke="#14152B" stroke-width="13" stroke-linecap="round"/>
+  <path d="M30 27C35 39 43 49 56.5 52" fill="none" stroke="#38D9A9" stroke-width="7.5" stroke-linecap="round"/>
+  <circle cx="64.5" cy="53" r="4.6" fill="#38D9A9"/>
+</svg>

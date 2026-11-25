@@ -89,7 +89,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <Menu.Target>
                 <UnstyledButton aria-label="Account">
                   <Group gap={8} wrap="nowrap">
-                    <Avatar color="indigo" radius="xl" size={34}>
+                    <Avatar color="arqIndigo" radius="xl" size={34}>
                       {initials(me.displayName)}
                     </Avatar>
                     <Text size="sm" fw={500} visibleFrom="sm">
