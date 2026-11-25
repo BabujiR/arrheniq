@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Button, Card, Group, SimpleGrid, Skeleton, Stack, Text, ThemeIcon, Title, UnstyledButton } from '@mantine/core';
+import { Button, Card, Group, SimpleGrid, Skeleton, Stack, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
 import { keys, productsApi, testMethodsApi } from '../api/masterdata';
 import type { Product } from '../api/types';
 import { useSession } from '../auth/SessionProvider';
 import { EmptyState } from '../components/EmptyState';
 import { formatInstant } from '../components/format';
-import { IconApproved, IconCheck, IconDraft, IconPlus, IconProduct, IconReview, IconTest } from '../components/icons';
+import { IconApproved, IconCheck, IconDraft, IconHome, IconPlus, IconProduct, IconReview, IconTest } from '../components/icons';
+import { PageHeader } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
 import { useCountUp } from '../components/useCountUp';
 
@@ -42,14 +43,11 @@ export function HomePage() {
 
   return (
     <Stack gap="lg">
-      <div className="arq-fade-in">
-        <Title order={2}>
-          {greeting()}, {firstName}
-        </Title>
-        <Text c="dimmed">
-          {new Intl.DateTimeFormat('en-US', { dateStyle: 'full' }).format(new Date())} · {me.tenant}
-        </Text>
-      </div>
+      <PageHeader
+        icon={<IconHome size={24} />}
+        title={`${greeting()}, ${firstName}`}
+        description={`${new Intl.DateTimeFormat('en-US', { dateStyle: 'full' }).format(new Date())} · ${me.tenant}`}
+      />
 
       {canView && (
         <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>

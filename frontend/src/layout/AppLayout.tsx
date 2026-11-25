@@ -68,10 +68,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <AppShell
-      header={{ height: 60 }}
+      header={{ height: 56 }}
       navbar={{ width: collapsed ? 76 : 250, breakpoint: 'sm', collapsed: { mobile: !navOpen } }}
       footer={{ height: 36 }}
-      padding="lg"
+      padding="md"
       transitionDuration={180}
     >
       <AppShell.Header>
@@ -88,8 +88,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <Group gap="xs" wrap="nowrap">
             <Tooltip label={scheme === 'dark' ? 'Light mode' : 'Dark mode'}>
               <ActionIcon
-                variant="default"
+                variant="subtle"
+                color="gray"
                 size="lg"
+                radius="xl"
                 aria-label="Toggle colour scheme"
                 onClick={() => setColorScheme(scheme === 'dark' ? 'light' : 'dark')}
                 className="arq-hover-icon"
@@ -178,7 +180,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </AppShell.Section>
       </AppShell.Navbar>
 
-      <AppShell.Main>{children}</AppShell.Main>
+      {/* flex column: a page's last block (e.g. a grid) can fill the space down to the footer */}
+      <AppShell.Main style={{ display: 'flex', flexDirection: 'column' }}>{children}</AppShell.Main>
 
       <AppShell.Footer>
         <Group h="100%" justify="center" px="md">

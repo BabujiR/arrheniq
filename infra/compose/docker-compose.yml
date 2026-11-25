@@ -40,6 +40,8 @@ services:
       - "8180:8180"
     volumes:
       - ./keycloak/arrheniq-dev-realm.json:/opt/keycloak/data/import/arrheniq-dev-realm.json:ro
+      # ArrheniQ-branded sign-in page (realm loginTheme "arrheniq"); theme caching is off in start-dev
+      - ./keycloak/themes/arrheniq:/opt/keycloak/themes/arrheniq:ro
 
   mailpit:
     image: axllent/mailpit:latest

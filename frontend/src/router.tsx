@@ -6,15 +6,17 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { SignedOutPage } from './pages/SignedOutPage';
+import { WelcomePage } from './pages/WelcomePage';
 import { TestMethodsPage } from './pages/TestMethodsPage';
 
 /**
- * Routes. Everything under the pathless "app" route needs a session (SessionProvider redirects to login);
- * /signed-out does not.
+ * Routes. Everything under the pathless "app" route needs a session (SessionProvider sends visitors without one
+ * to /welcome); /welcome and /signed-out do not.
  */
 const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: NotFoundPage });
 
 const signedOutRoute = createRoute({ getParentRoute: () => rootRoute, path: '/signed-out', component: SignedOutPage });
+const welcomeRoute = createRoute({ getParentRoute: () => rootRoute, path: '/welcome', component: WelcomePage });
 
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -57,6 +59,7 @@ const testMethodsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   signedOutRoute,
+  welcomeRoute,
   appRoute.addChildren([indexRoute, productsRoute, productRoute, testMethodsRoute]),
 ]);
 

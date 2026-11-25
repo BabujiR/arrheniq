@@ -1,0 +1,99 @@
+/* ArrheniQ branding on top of Keycloak's classic login theme (colours: docs/brand/README.md). */
+
+.login-pf body {
+  background: #f6f7fb none !important;
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  color: #1a1b2e;
+}
+
+/* faint measurement point in the corner, echoing the app's welcome screen */
+.login-pf-page {
+  background: radial-gradient(circle at 92% 92%, rgba(12, 166, 120, 0.14) 0 26px, transparent 27px) no-repeat;
+  min-height: 100vh;
+}
+
+/* header: logo instead of the realm name */
+#kc-header {
+  color: transparent;
+  margin-bottom: 8px;
+}
+#kc-header-wrapper {
+  font-size: 0 !important;
+  line-height: 0;
+  padding: 48px 10px 16px;
+  display: flex;
+  justify-content: center;
+}
+#kc-header-wrapper::before {
+  content: '';
+  display: block;
+  width: 260px;
+  height: 64px;
+  background: url('../img/arrheniq-logo.svg') center / contain no-repeat;
+}
+
+/* the card */
+.card-pf {
+  border: 1px solid #e3e5ef;
+  border-top: 4px solid #2e3192;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(26, 27, 46, 0.08);
+  padding: 32px 40px 28px;
+  max-width: 460px;
+}
+#kc-page-title {
+  font-family: 'Space Grotesk', 'Segoe UI', Inter, sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  text-align: center;
+  color: #1a1b2e;
+}
+
+/* inputs and primary button */
+.login-pf input[type='text'],
+.login-pf input[type='password'],
+.login-pf input[type='email'],
+.pf-c-form-control {
+  border-radius: 8px !important;
+}
+.login-pf input:focus,
+.pf-c-form-control:focus {
+  border-color: #2e3192 !important;
+  box-shadow: 0 0 0 3px rgba(46, 49, 146, 0.18) !important;
+}
+#kc-login,
+.pf-c-button.pf-m-primary,
+.btn-primary {
+  background: #2e3192 !important;
+  border-color: #2e3192 !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+#kc-login:hover,
+.pf-c-button.pf-m-primary:hover,
+.btn-primary:hover {
+  background: #24267a !important;
+  border-color: #24267a !important;
+}
+
+a,
+a:hover {
+  color: #2e3192;
+}
+
+/* copyright under the card */
+.login-pf-page::after {
+  content: '\00A9  ArrheniQ. All rights reserved.';
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: #5c5f7a;
+  padding: 24px 0;
+}
+
+/* local-development hint: Keycloak here stands in for Amazon Cognito or the customer's identity provider */
+#kc-info-wrapper {
+  border-radius: 0 0 16px 16px;
+}

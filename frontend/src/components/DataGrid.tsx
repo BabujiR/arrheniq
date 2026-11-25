@@ -8,13 +8,35 @@ interface Props<T> {
   rowId: (row: T) => string;
   onRowClick?: (row: T) => void;
   loading?: boolean;
+  /** Fixed height; by default the grid fills the rest of the page (AppShell.Main is a flex column). */
   height?: string;
   /** Shown when there are no rows (plain text). */
   emptyMessage?: string;
 }
 
-const lightTheme = themeQuartz.withPart(colorSchemeLight);
-const darkTheme = themeQuartz.withPart(colorSchemeDark);
+const FONT = ['Inter Variable', 'Inter', 'system-ui', 'Segoe UI', 'sans-serif'];
+const shared = {
+  fontFamily: FONT,
+  fontSize: 13.5,
+  headerFontSize: 11.5,
+  headerFontWeight: 600,
+  rowHeight: 42,
+  headerHeight: 40,
+  wrapperBorderRadius: 10,
+  spacing: 7,
+};
+const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
+  ...shared,
+  accentColor: '#2E3192',
+  headerBackgroundColor: '#F6F7FB',
+  headerTextColor: '#5C5F7A',
+  borderColor: '#E3E5EF',
+  rowHoverColor: '#EEF0FB',
+});
+const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
+  ...shared,
+  accentColor: '#8B91DE',
+});
 
 /** AG Grid (Community) with ArrheniQ defaults: sortable/filterable/resizable columns, row click to open, dark mode. */
 export function DataGrid<T>({
@@ -23,12 +45,15 @@ export function DataGrid<T>({
   rowId,
   onRowClick,
   loading,
-  height = 'calc(100vh - 250px)',
+  height,
   emptyMessage = 'Nothing to show yet.',
 }: Props<T>) {
   const scheme = useComputedColorScheme('light');
   return (
-    <div style={{ height, width: '100%' }} className="arq-fade-in">
+    <div
+      style={height ? { height, width: '100%' } : { flex: '1 1 0', minHeight: 320, width: '100%' }}
+      className="arq-fade-in arq-grid"
+    >
       <AgGridReact<T>
         theme={scheme === 'dark' ? darkTheme : lightTheme}
         rowData={rows ?? []}

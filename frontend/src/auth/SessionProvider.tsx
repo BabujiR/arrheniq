@@ -7,7 +7,7 @@ import type { Me } from '../api/types';
 import { can as canCheck } from './permissions';
 import { Logo } from '../brand/Logo';
 import { IconLock } from '../components/icons';
-import { goToLogin, goToReauth } from './navigation';
+import { goToReauth, goToWelcome } from './navigation';
 
 interface Session {
   me: Me;
@@ -26,7 +26,7 @@ export function useSession(): Session {
 
 /**
  * Loads "who am I" once and reacts to authentication problems from any API call:
- * idle lock → lock screen with Unlock (re-authentication); no/expired/revoked session → login.
+ * idle lock → lock screen with Unlock (re-authentication); no/expired/revoked session → welcome screen.
  */
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [locked, setLocked] = useState(false);
@@ -35,8 +35,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     onAuthProblem((code) => {
       if (code === 'ARQ-AUTH-LOCKED') {
         setLocked(true);
+      } else if (code === 'ARQ-AUTH-EXPIRED') {
+        goToWelcome('expired');
+      } else if (code === 'ARQ-AUTH-REVOKED') {
+        goToWelcome('revoked');
       } else {
-        goToLogin();
+        goToWelcome();
       }
     });
   }, []);
@@ -63,7 +67,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }
 
   if (me.isPending || me.isError) {
-    // on 401 the listener is already redirecting to the login page
+    // on 401 the listener is already redirecting to the welcome screen
     return (
       <Center h="100vh">
         <Stack align="center" gap="xs">

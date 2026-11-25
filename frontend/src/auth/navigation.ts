@@ -6,6 +6,21 @@ export function currentPath(): string {
   return window.location.pathname + window.location.search;
 }
 
+/**
+ * Why the user sees the welcome screen: no session yet, the session ended (expired/revoked), or the
+ * session belongs to another tenant.
+ */
+export type WelcomeReason = 'none' | 'expired' | 'revoked';
+
+/** The ArrheniQ welcome screen (no session needed); its Sign in button continues to the IdP. */
+export function goToWelcome(reason: WelcomeReason = 'none', returnTo: string = currentPath()): void {
+  const params = new URLSearchParams({ returnTo });
+  if (reason !== 'none') {
+    params.set('reason', reason);
+  }
+  window.location.assign(`/welcome?${params.toString()}`);
+}
+
 export function goToLogin(returnTo: string = currentPath()): void {
   window.location.assign(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
 }

@@ -1,4 +1,5 @@
-// brand font, self-hosted (no external font requests: works with a strict Content-Security-Policy)
+// fonts, self-hosted (no external font requests: works with a strict Content-Security-Policy)
+import '@fontsource-variable/inter';
 import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
 import '@mantine/core/styles.css';

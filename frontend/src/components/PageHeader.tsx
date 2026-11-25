@@ -9,24 +9,33 @@ interface Props {
   actions?: ReactNode;
 }
 
-/** Page title with its icon and one line saying what the page is for. */
+/** Page title with its (animated) icon and one line saying what the page is for. Compact, so content gets the room. */
 export function PageHeader({ icon, title, description, color = 'arqIndigo', actions }: Props) {
+  const from = color === 'arqIndigo' ? 'arqIndigo.8' : `${color}.7`;
   return (
-    <Group justify="space-between" align="flex-start" mb="md" wrap="wrap" gap="md">
-      <Group gap="sm" wrap="nowrap" align="flex-start">
-        <ThemeIcon size={42} radius="md" variant="light" color={color} className="arq-pop">
+    <Group justify="space-between" align="center" mb="sm" wrap="wrap" gap="sm">
+      <Group gap={12} wrap="nowrap" align="center">
+        <ThemeIcon
+          size={38}
+          radius="md"
+          variant="gradient"
+          gradient={{ from, to: 'teal.6', deg: 135 }}
+          className="arq-pop arq-draw arq-tile"
+        >
           {icon}
         </ThemeIcon>
-        <Stack gap={2}>
-          <Title order={3}>{title}</Title>
+        <Stack gap={0}>
+          <Title order={2} fz={20} lh={1.25} fw={650}>
+            {title}
+          </Title>
           {description && (
-            <Text size="sm" c="dimmed">
+            <Text size="xs" c="dimmed" lh={1.4}>
               {description}
             </Text>
           )}
         </Stack>
       </Group>
-      {actions && <Group gap="sm">{actions}</Group>}
+      {actions && <Group gap="xs">{actions}</Group>}
     </Group>
   );
 }
