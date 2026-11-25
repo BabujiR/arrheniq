@@ -1,0 +1,29 @@
+# Documentation checks for tracked docs (architecture, ADRs, data): broken relative links.
+# Plan: docs/ci/README.md (stage C4).
+name: docs
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "**/README.md"
+      - ".github/workflows/docs.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "**/README.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: Relative link check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check relative Markdown links resolve
+        run: python3 scripts/ci/check_md_links.py docs backend

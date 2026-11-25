@@ -138,7 +138,7 @@ sequenceDiagram
 | Object storage | S3 API with Object Lock | 0010 |
 | Identity | OIDC/SAML; Amazon Cognito (cloud); customer IdP (private) | 0005 |
 | Observability | OpenTelemetry (traces, metrics, logs) | 0009 |
-| Build / CI | Gradle (Kotlin DSL), pnpm, uv (Python); GitHub Actions | 0014 |
+| Build / CI | **Maven** multi-module (backend), pnpm (frontend), uv (Python); GitHub Actions | 0014, 0017 |
 | Testing | JUnit 5, Testcontainers (PostgreSQL, MinIO, Keycloak as a test IdP), ArchUnit, Spring Modulith tests, Playwright, pytest + Hypothesis | 0015 |
 | Infrastructure | Terraform (AWS), ECS Fargate; Helm chart + Docker Compose for Private | 0009 |
 
@@ -146,7 +146,9 @@ sequenceDiagram
 ```
 arrheniq/
 ├── CLAUDE.md
-├── backend/                     # Gradle project: arrheniq-app (+ migrator)
+├── backend/                     # Maven multi-module: pom.xml (parent) → app/, migrator/
+│   ├── pom.xml                              # parent: spring-boot-starter-parent 4.1.x
+│   ├── app/pom.xml                          # arrheniq-app (Spring Boot)
 │   ├── app/src/main/java/com/arrheniq/
 │   │   ├── kernel/{tenancy,audit,security,config}/
 │   │   ├── identity/ masterdata/ protocol/ study/ scheduling/
@@ -154,7 +156,7 @@ arrheniq/
 │   │   ├── notifications/ integration/ migration/ platform/
 │   │   └── ArrheniqApplication.java
 │   ├── app/src/main/resources/db/migration/   # Flyway
-│   └── migrator/                              # eSTAR migration CLI
+│   └── migrator/                              # eSTAR migration CLI (pom.xml)
 ├── stats/                       # Python FastAPI engine (uv)
 │   ├── arrheniq_stats/{algorithms,api,charts}/
 │   └── tests/{reference_data,unit,property}/

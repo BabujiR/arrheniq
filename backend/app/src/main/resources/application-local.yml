@@ -1,0 +1,15 @@
+# Local development profile: run with  -Dspring-boot.run.profiles=local
+# Expects a local PostgreSQL 16 bootstrapped with db/bootstrap/00_roles_and_database.sql
+# using the passwords below (local only; never use these anywhere else).
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/arrheniq
+    username: arrheniq_app
+    password: local-app
+  flyway:
+    user: arrheniq_owner
+    password: local-owner
+
+logging:
+  level:
+    com.arrheniq: DEBUG

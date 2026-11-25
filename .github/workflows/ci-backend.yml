@@ -1,0 +1,56 @@
+# Backend CI: Maven build, unit tests (Surefire) and integration tests (Failsafe + Testcontainers).
+# Plan: docs/ci/README.md (stage C1). Traces: URS-VAL-001 (test evidence), ADR 0015, ADR 0017.
+name: ci-backend
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Maven verify (JDK 25)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Build, unit and integration tests
+        # Docker is available on GitHub-hosted Ubuntu runners, so Testcontainers (ApplicationIT) runs here.
+        run: mvn -B -ntp verify
+
+      - name: Upload test reports (OQ evidence input)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports-${{ github.run_number }}
+          path: |
+            backend/**/target/surefire-reports/
+            backend/**/target/failsafe-reports/
+          retention-days: 90
+          if-no-files-found: warn
