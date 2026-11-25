@@ -23,7 +23,7 @@ export function DataGrid<T>({
   rowId,
   onRowClick,
   loading,
-  height = 'calc(100vh - 210px)',
+  height = 'calc(100vh - 250px)',
   emptyMessage = 'Nothing to show yet.',
 }: Props<T>) {
   const scheme = useComputedColorScheme('light');

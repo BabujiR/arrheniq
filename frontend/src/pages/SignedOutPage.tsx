@@ -1,5 +1,6 @@
 import { Button, Center, Paper, Stack, Text } from '@mantine/core';
 import { Logo } from '../brand/Logo';
+import { CopyrightLine } from '../layout/Footer';
 import { goToLogin } from '../auth/navigation';
 
 const MESSAGES: Record<string, string> = {
@@ -25,6 +26,9 @@ export function SignedOutPage() {
           </Button>
         </Stack>
       </Paper>
+      <div style={{ position: 'fixed', bottom: 12, left: 0, right: 0 }}>
+        <CopyrightLine />
+      </div>
     </Center>
   );
 }

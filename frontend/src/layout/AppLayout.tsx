@@ -12,15 +12,17 @@ import {
   Text,
   Tooltip,
   UnstyledButton,
+  em,
   useComputedColorScheme,
   useMantineColorScheme,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useSession } from '../auth/SessionProvider';
 import { logout } from '../auth/navigation';
 import { Logo } from '../brand/Logo';
-import { IconHome, IconLogout, IconMoon, IconProduct, IconSun, IconTest } from '../components/icons';
+import { IconCollapse, IconExpand, IconHome, IconLogout, IconMoon, IconProduct, IconSun, IconTest } from '../components/icons';
+import { CopyrightLine } from './Footer';
 
 interface NavItem {
   to: '/' | '/products' | '/test-methods';
@@ -45,7 +47,11 @@ function initials(name: string): string {
     .join('');
 }
 
-/** Header (logo, tenant, theme toggle, user menu) and navigation with icons; menu collapses on small screens. */
+/**
+ * Header (logo, tenant, theme toggle, user menu), navigation and footer.
+ * - Desktop: the menu can be collapsed to an icon rail (labels as tooltips); the choice is remembered.
+ * - Phone/small window: the menu is hidden behind the burger and slides in at full width.
+ */
 export function AppLayout({ children }: { children: ReactNode }) {
   const { me, can } = useSession();
   const navigate = useNavigate();
@@ -53,14 +59,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [navOpen, { toggle: toggleNav, close: closeNav }] = useDisclosure(false);
   const { setColorScheme } = useMantineColorScheme();
   const scheme = useComputedColorScheme('light');
+  const isMobile = useMediaQuery(`(max-width: ${em(767)})`) ?? false;
+  const [collapsedPref, setCollapsed] = useLocalStorage<boolean>({ key: 'arq.nav.collapsed', defaultValue: false });
+  const collapsed = collapsedPref && !isMobile;
+  const items = NAV.filter((item) => !item.permission || can(item.permission));
 
   const isActive = (to: NavItem['to']) => (to === '/' ? pathname === '/' : pathname.startsWith(to));
 
   return (
     <AppShell
       header={{ height: 60 }}
-      navbar={{ width: 250, breakpoint: 'sm', collapsed: { mobile: !navOpen } }}
+      navbar={{ width: collapsed ? 76 : 250, breakpoint: 'sm', collapsed: { mobile: !navOpen } }}
+      footer={{ height: 36 }}
       padding="lg"
+      transitionDuration={180}
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
@@ -122,26 +134,57 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </AppShell.Header>
 
       <AppShell.Navbar p="sm">
-        <Stack gap={4}>
-          {NAV.filter((item) => !item.permission || can(item.permission)).map((item) => (
+        <AppShell.Section grow>
+          <Stack gap={4}>
+            {items.map((item) => (
+              <Tooltip key={item.to} label={item.label} position="right" withArrow disabled={!collapsed}>
+                <NavLink
+                  label={collapsed ? null : item.label}
+                  description={collapsed ? undefined : item.description}
+                  aria-label={item.label}
+                  leftSection={item.icon}
+                  active={isActive(item.to)}
+                  className={isActive(item.to) ? 'arq-hover-icon arq-active-icon' : 'arq-hover-icon'}
+                  styles={{
+                    root: { borderRadius: 'var(--mantine-radius-md)', justifyContent: collapsed ? 'center' : undefined },
+                    section: collapsed ? { marginInlineEnd: 0 } : undefined,
+                    body: collapsed ? { display: 'none' } : undefined,
+                  }}
+                  onClick={() => {
+                    closeNav();
+                    void navigate({ to: item.to });
+                  }}
+                />
+              </Tooltip>
+            ))}
+          </Stack>
+        </AppShell.Section>
+        <AppShell.Section visibleFrom="sm">
+          <Tooltip label={collapsed ? 'Expand menu' : 'Collapse menu'} position="right" withArrow>
             <NavLink
-              key={item.to}
-              label={item.label}
-              description={item.description}
-              leftSection={item.icon}
-              active={isActive(item.to)}
-              className={isActive(item.to) ? 'arq-hover-icon arq-active-icon' : 'arq-hover-icon'}
-              styles={{ root: { borderRadius: 'var(--mantine-radius-md)' } }}
-              onClick={() => {
-                closeNav();
-                void navigate({ to: item.to });
+              label={collapsed ? null : 'Collapse menu'}
+              aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
+              leftSection={collapsed ? <IconExpand size={20} /> : <IconCollapse size={20} />}
+              className="arq-hover-icon"
+              c="dimmed"
+              styles={{
+                root: { borderRadius: 'var(--mantine-radius-md)', justifyContent: collapsed ? 'center' : undefined },
+                section: collapsed ? { marginInlineEnd: 0 } : undefined,
+                body: collapsed ? { display: 'none' } : undefined,
               }}
+              onClick={() => setCollapsed(!collapsed)}
             />
-          ))}
-        </Stack>
+          </Tooltip>
+        </AppShell.Section>
       </AppShell.Navbar>
 
       <AppShell.Main>{children}</AppShell.Main>
+
+      <AppShell.Footer>
+        <Group h="100%" justify="center" px="md">
+          <CopyrightLine />
+        </Group>
+      </AppShell.Footer>
     </AppShell>
   );
 }

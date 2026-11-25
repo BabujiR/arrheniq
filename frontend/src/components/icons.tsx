@@ -154,3 +154,21 @@ export const IconMoon = (p: P) => (
     <path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z" />
   </Svg>
 );
+
+/** Collapse the side menu. */
+export const IconCollapse = (p: P) => (
+  <Svg {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+    <path d="M9 4.5v15" />
+    <path d="m15.5 9.5-2.5 2.5 2.5 2.5" />
+  </Svg>
+);
+
+/** Expand the side menu. */
+export const IconExpand = (p: P) => (
+  <Svg {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+    <path d="M9 4.5v15" />
+    <path d="m13 9.5 2.5 2.5-2.5 2.5" />
+  </Svg>
+);
