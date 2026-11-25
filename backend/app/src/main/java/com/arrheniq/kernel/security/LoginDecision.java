@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,7 +14,7 @@ import java.util.UUID;
  *   <li>everything else → deny with a reason that is audited (never shown in detail to the user)</li>
  * </ul>
  */
-public record LoginDecision(Outcome outcome, UUID userId, DenyReason denyReason) {
+public record LoginDecision(Outcome outcome, @Nullable UUID userId, @Nullable DenyReason denyReason) {
 
     public enum Outcome { ALLOW, LINK_INVITATION, DENY }
 
@@ -49,7 +50,7 @@ public record LoginDecision(Outcome outcome, UUID userId, DenyReason denyReason)
         return deny(null, DenyReason.UNKNOWN_USER);
     }
 
-    private static LoginDecision deny(UUID userId, DenyReason reason) {
+    private static LoginDecision deny(@Nullable UUID userId, DenyReason reason) {
         return new LoginDecision(Outcome.DENY, userId, reason);
     }
 

@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -21,8 +22,8 @@ import java.time.Duration;
 @ConfigurationProperties("arrheniq.security")
 public record ArrheniqSecurityProperties(
         String registrationId,
-        String baseDomain,
-        String fixedTenantSlug,
+        @Nullable String baseDomain,
+        @Nullable String fixedTenantSlug,
         Duration absoluteSessionLifetime,
         Duration defaultIdleLock,
         Duration defaultLogoff,
@@ -43,7 +44,7 @@ public record ArrheniqSecurityProperties(
         }
     }
 
-    private static String blankTo(String value, String fallback) {
+    private static String blankTo(@Nullable String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }
 }

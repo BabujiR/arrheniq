@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.audit;
 
+import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -7,7 +8,7 @@ import java.util.UUID;
  * Who performed an audited action. {@code name} is the printed name at the time of the action
  * (kept even if the user is later renamed). {@code userId} is null only for SYSTEM/PLATFORM actors.
  */
-public record AuditActor(UUID userId, String name, Type type) {
+public record AuditActor(@Nullable UUID userId, String name, Type type) {
 
     public enum Type { USER, API_KEY, SYSTEM, MIGRATION, PLATFORM }
 

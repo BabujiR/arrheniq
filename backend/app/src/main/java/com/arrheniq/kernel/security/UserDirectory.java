@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import com.arrheniq.kernel.audit.AuditActor;
 import com.arrheniq.kernel.audit.AuditEventDraft;
 import com.arrheniq.kernel.audit.AuditService;
@@ -57,7 +58,7 @@ public class UserDirectory {
 
     /** The open invitation for this e-mail (case-insensitive), if exactly one exists. */
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
-    public Optional<LoginDecision.UserRecord> findInvitationByEmail(String email) {
+    public Optional<LoginDecision.UserRecord> findInvitationByEmail(@Nullable String email) {
         if (email == null || email.isBlank()) {
             return Optional.empty();
         }

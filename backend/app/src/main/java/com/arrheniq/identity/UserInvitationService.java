@@ -1,5 +1,6 @@
 package com.arrheniq.identity;
 
+import org.jspecify.annotations.Nullable;
 import com.arrheniq.kernel.audit.AuditActor;
 import com.arrheniq.kernel.audit.AuditEventDraft;
 import com.arrheniq.kernel.audit.AuditService;
@@ -31,7 +32,7 @@ public class UserInvitationService {
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     /** A role to assign; {@code siteCode == null} means all sites. */
-    public record RoleAssignment(String roleCode, String siteCode) { }
+    public record RoleAssignment(String roleCode, @Nullable String siteCode) { }
 
     public record Invitation(String username, String email, String displayName, List<RoleAssignment> roles) {
         public Invitation {

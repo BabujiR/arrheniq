@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
@@ -19,12 +20,12 @@ public class Access {
     }
 
     /** True if the current user holds the permission at this site. */
-    public boolean hasAt(String permission, UUID siteId) {
+    public boolean hasAt(String permission, @Nullable UUID siteId) {
         return CurrentUserHolder.current().map(u -> u.grants().hasAt(permission, siteId)).orElse(false);
     }
 
     /** Throws {@link AccessDeniedException} (HTTP 403) unless the permission is held at this site. */
-    public void requireAt(String permission, UUID siteId) {
+    public void requireAt(String permission, @Nullable UUID siteId) {
         if (!hasAt(permission, siteId)) {
             throw new AccessDeniedException("ARQ-AUTHZ-001: missing permission " + permission + " for site");
         }

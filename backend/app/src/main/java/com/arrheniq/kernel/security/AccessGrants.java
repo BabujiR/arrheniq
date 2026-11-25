@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +15,7 @@ import java.util.UUID;
 public final class AccessGrants {
 
     /** One row of the assignment query: a permission granted at a site (null = all sites). */
-    public record Grant(String permission, UUID siteId) { }
+    public record Grant(@Nullable String permission, @Nullable UUID siteId) { }
 
     private final Map<String, SiteScope> byPermission;
 

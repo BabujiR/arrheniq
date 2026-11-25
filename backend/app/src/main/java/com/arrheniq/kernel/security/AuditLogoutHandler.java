@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -19,7 +20,8 @@ public class AuditLogoutHandler implements LogoutHandler {
     }
 
     @Override
-    public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+    public void logout(HttpServletRequest request, HttpServletResponse response,
+                       @Nullable Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof ArrheniqUser user) {
             auditor.record(user.tenantId(), SecurityAuditor.actorFor(user), "LOGOUT", user.userId(),
                     user.username(), List.of());

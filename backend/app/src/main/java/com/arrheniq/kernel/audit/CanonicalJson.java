@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.audit;
 
+import org.jspecify.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -35,7 +36,7 @@ public final class CanonicalJson {
 
     private CanonicalJson() { }
 
-    public static String write(Object value) {
+    public static String write(@Nullable Object value) {
         StringBuilder out = new StringBuilder(256);
         append(out, value);
         return out.toString();
@@ -46,7 +47,7 @@ public final class CanonicalJson {
         return MICROS_UTC.format(instant.truncatedTo(ChronoUnit.MICROS));
     }
 
-    private static void append(StringBuilder out, Object value) {
+    private static void append(StringBuilder out, @Nullable Object value) {
         switch (value) {
             case null -> out.append("null");
             case String s -> appendString(out, s);

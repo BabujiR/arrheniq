@@ -64,6 +64,8 @@ class FieldDiffAndReasonPolicyTest {
         assertTrue(policy.requiresReason(draft("LOGICAL_DELETE", "DRAFT", null)));
         assertTrue(policy.requiresReason(draft("REVERSAL", null, null)));
         assertTrue(policy.requiresReason(draft("SCHEDULE_DATE_CHANGE", "SCHEDULED", null)));
+        assertTrue(policy.requiresReason(draft("RETIRE", "ACTIVE", null)));
+        assertTrue(policy.requiresReason(draft("REJECT", "IN_REVIEW", null)));
     }
 
     @Test

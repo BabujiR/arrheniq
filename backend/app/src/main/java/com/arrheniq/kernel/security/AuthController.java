@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpHeaders;
@@ -32,7 +33,7 @@ public class AuthController {
 
     /** Starts login; remembers a safe return path. */
     @GetMapping("/auth/login")
-    public ResponseEntity<Void> login(@RequestParam(name = "returnTo", required = false) String returnTo,
+    public ResponseEntity<Void> login(@RequestParam(name = "returnTo", required = false) @Nullable String returnTo,
                                       HttpServletRequest request) {
         if (SafeRedirects.isSafe(returnTo)) {
             request.getSession(true).setAttribute(SessionKeys.RETURN_TO, returnTo);
@@ -47,7 +48,7 @@ public class AuthController {
     @AuthenticatedOnly
     @GetMapping("/auth/reauth")
     public ResponseEntity<Void> reauth(@RequestParam(name = "purpose", defaultValue = "SIGN") String purpose,
-                                       @RequestParam(name = "returnTo", required = false) String returnTo,
+                                       @RequestParam(name = "returnTo", required = false) @Nullable String returnTo,
                                        HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -69,7 +70,7 @@ public class AuthController {
 
     /** Landing page after logout or a failed login; the SPA shows the message. */
     @GetMapping("/auth/signed-out")
-    public Map<String, String> signedOut(@RequestParam(name = "error", required = false) String error) {
+    public Map<String, String> signedOut(@RequestParam(name = "error", required = false) @Nullable String error) {
         String status = "login".equals(error) || "reauth".equals(error) ? error + "_failed" : "signed_out";
         return Map.of("status", status);
     }

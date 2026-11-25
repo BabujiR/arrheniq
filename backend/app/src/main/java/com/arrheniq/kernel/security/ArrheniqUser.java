@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -26,7 +27,8 @@ public final class ArrheniqUser extends DefaultOidcUser {
     private final String username;
     private final String displayName;
 
-    public ArrheniqUser(Collection<? extends GrantedAuthority> authorities, OidcIdToken idToken, OidcUserInfo userInfo,
+    public ArrheniqUser(Collection<? extends GrantedAuthority> authorities, OidcIdToken idToken,
+                        @Nullable OidcUserInfo userInfo,
                         UUID tenantId, String tenantSlug, UUID userId, String username, String displayName) {
         super(authorities, idToken, userInfo, "sub");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
@@ -64,7 +66,7 @@ public final class ArrheniqUser extends DefaultOidcUser {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         return o instanceof ArrheniqUser other && super.equals(o)
                 && tenantId.equals(other.tenantId) && userId.equals(other.userId);
     }

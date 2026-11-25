@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.audit;
 
+import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,22 +17,22 @@ public record AuditEvent(
         long seq,
         UUID id,
         Instant occurredAt,
-        UUID siteId,
-        UUID actorUserId,
+        @Nullable UUID siteId,
+        @Nullable UUID actorUserId,
         String actorName,
         AuditActor.Type actorType,
         String action,
         String recordType,
-        UUID recordId,
-        Long recordVersion,
-        String businessKey,
+        @Nullable UUID recordId,
+        @Nullable Long recordVersion,
+        @Nullable String businessKey,
         List<FieldChange> changes,
-        String reason,
-        String reasonCode,
+        @Nullable String reason,
+        @Nullable String reasonCode,
         String correlationId,
         boolean legacy,
-        byte[] prevHash,
-        byte[] hash) {
+        byte @Nullable [] prevHash,
+        byte @Nullable [] hash) {
 
     public AuditEvent {
         changes = List.copyOf(changes);
@@ -40,12 +41,12 @@ public record AuditEvent(
     }
 
     @Override
-    public byte[] prevHash() {
+    public byte @Nullable [] prevHash() {
         return prevHash == null ? null : prevHash.clone();
     }
 
     @Override
-    public byte[] hash() {
+    public byte @Nullable [] hash() {
         return hash == null ? null : hash.clone();
     }
 
@@ -59,8 +60,8 @@ public record AuditEvent(
     }
 
     /** The fields covered by the hash (canonical JSON v1). Hashes and client_info are excluded. */
-    public Map<String, Object> hashInput() {
-        Map<String, Object> m = new LinkedHashMap<>();
+    public Map<String, @Nullable Object> hashInput() {
+        Map<String, @Nullable Object> m = new LinkedHashMap<>();
         m.put("tenantId", tenantId);
         m.put("seq", seq);
         m.put("id", id);

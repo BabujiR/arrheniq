@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.audit;
 
+import org.jspecify.annotations.Nullable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,10 +22,10 @@ public final class StrictJsonReader {
         this.s = s;
     }
 
-    public static Object read(String json) {
+    public static @Nullable Object read(String json) {
         StrictJsonReader r = new StrictJsonReader(json);
         r.skipWs();
-        Object v = r.value();
+        @Nullable Object v = r.value();
         r.skipWs();
         if (r.pos != r.s.length()) {
             throw r.error("trailing content");
@@ -32,7 +33,7 @@ public final class StrictJsonReader {
         return v;
     }
 
-    private Object value() {
+    private @Nullable Object value() {
         if (pos >= s.length()) {
             throw error("unexpected end");
         }
@@ -53,8 +54,8 @@ public final class StrictJsonReader {
         };
     }
 
-    private Map<String, Object> object() {
-        Map<String, Object> m = new LinkedHashMap<>();
+    private Map<String, @Nullable Object> object() {
+        Map<String, @Nullable Object> m = new LinkedHashMap<>();
         pos++;
         skipWs();
         if (peek() == '}') {
@@ -85,8 +86,8 @@ public final class StrictJsonReader {
         }
     }
 
-    private List<Object> array() {
-        List<Object> list = new ArrayList<>();
+    private List<@Nullable Object> array() {
+        List<@Nullable Object> list = new ArrayList<>();
         pos++;
         skipWs();
         if (peek() == ']') {
@@ -159,7 +160,7 @@ public final class StrictJsonReader {
         }
     }
 
-    private Object literal(String word, Object value) {
+    private @Nullable Object literal(String word, @Nullable Object value) {
         if (!s.startsWith(word, pos)) {
             throw error("bad literal");
         }

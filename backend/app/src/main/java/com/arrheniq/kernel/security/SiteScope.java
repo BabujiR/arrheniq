@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -23,7 +24,7 @@ public record SiteScope(boolean allSites, Set<UUID> siteIds) implements Serializ
         return new SiteScope(false, sites);
     }
 
-    public boolean includes(UUID siteId) {
+    public boolean includes(@Nullable UUID siteId) {
         return allSites || (siteId != null && siteIds.contains(siteId));
     }
 

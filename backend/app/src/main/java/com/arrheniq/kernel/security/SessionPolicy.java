@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
@@ -20,7 +21,7 @@ public final class SessionPolicy {
 
     private SessionPolicy() { }
 
-    public static State evaluate(Instant now, Instant loginAt, Instant lastActivityAt, boolean alreadyLocked,
+    public static State evaluate(Instant now, @Nullable Instant loginAt, @Nullable Instant lastActivityAt, boolean alreadyLocked,
                                  Duration idleLock, Duration absoluteLifetime) {
         Objects.requireNonNull(now, "now");
         if (loginAt == null || lastActivityAt == null) {
@@ -36,7 +37,7 @@ public final class SessionPolicy {
     }
 
     /** Avoids a session write on every request: activity is recorded at most once per interval. */
-    public static boolean shouldRecordActivity(Instant now, Instant lastActivityAt, Duration granularity) {
+    public static boolean shouldRecordActivity(Instant now, @Nullable Instant lastActivityAt, Duration granularity) {
         return lastActivityAt == null || !now.isBefore(lastActivityAt.plus(granularity));
     }
 }

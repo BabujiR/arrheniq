@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -21,7 +22,7 @@ public final class ReauthPolicy {
      * Checks the IdP callback against the pending request: same tenant, same user, and an
      * {@code auth_time} that is not older than the request (the user really typed credentials again).
      */
-    public static Verdict verifyCallback(ReauthRequest pending, UUID tenantId, UUID userId, Instant authTime,
+    public static Verdict verifyCallback(ReauthRequest pending, UUID tenantId, UUID userId, @Nullable Instant authTime,
                                          Instant now, Duration maxFlowDuration) {
         if (!pending.tenantId().equals(tenantId)) {
             return Verdict.DIFFERENT_TENANT;
@@ -42,7 +43,7 @@ public final class ReauthPolicy {
     }
 
     /** Evidence may be used for a signature only by the same user, for that purpose, within {@code maxAge}. */
-    public static boolean isUsable(ReauthEvidence evidence, UUID tenantId, UUID userId,
+    public static boolean isUsable(@Nullable ReauthEvidence evidence, UUID tenantId, UUID userId,
                                    ReauthRequest.Purpose purpose, Instant now, Duration maxAge) {
         return evidence != null
                 && evidence.tenantId().equals(tenantId)

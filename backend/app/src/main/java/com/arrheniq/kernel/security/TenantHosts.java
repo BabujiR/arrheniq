@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -15,7 +16,7 @@ public final class TenantHosts {
 
     private TenantHosts() { }
 
-    public static Optional<String> slugFromHost(String host, String baseDomain) {
+    public static Optional<String> slugFromHost(@Nullable String host, @Nullable String baseDomain) {
         if (host == null || baseDomain == null || baseDomain.isBlank()) {
             return Optional.empty();
         }
@@ -43,7 +44,7 @@ public final class TenantHosts {
         return colon > 0 ? host.substring(0, colon) : host;
     }
 
-    public static boolean isValidSlug(String slug) {
+    public static boolean isValidSlug(@Nullable String slug) {
         return slug != null && SLUG.matcher(slug).matches();
     }
 }

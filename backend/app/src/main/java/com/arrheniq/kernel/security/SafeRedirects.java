@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 /**
  * Accepts only same-origin relative paths as post-login / post-re-authentication targets,
  * preventing open redirects (ASVS 5.1.5).
@@ -8,11 +9,11 @@ public final class SafeRedirects {
 
     private SafeRedirects() { }
 
-    public static String orDefault(String candidate, String fallback) {
+    public static String orDefault(@Nullable String candidate, String fallback) {
         return isSafe(candidate) ? candidate : fallback;
     }
 
-    public static boolean isSafe(String path) {
+    public static boolean isSafe(@Nullable String path) {
         if (path == null || path.isEmpty() || path.length() > 2048) {
             return false;
         }

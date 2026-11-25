@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.tenancy;
 
+import org.jspecify.annotations.Nullable;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -35,7 +36,7 @@ public final class TenantContextHolder {
     }
 
     /** Runs {@code work} with {@code context} bound and returns its result; restores the previous context. */
-    public static <T> T callAs(TenantContext context, Supplier<T> work) {
+    public static <T extends @Nullable Object> T callAs(TenantContext context, Supplier<T> work) {
         TenantContext previous = CURRENT.get();
         CURRENT.set(context);
         try {

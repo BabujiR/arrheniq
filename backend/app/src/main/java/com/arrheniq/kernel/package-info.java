@@ -4,6 +4,8 @@
  * Keep it small and stable.
  */
 @ApplicationModule(displayName = "Kernel", type = ApplicationModule.Type.OPEN)
+@NullMarked
 package com.arrheniq.kernel;
 
+import org.jspecify.annotations.NullMarked;
 import org.springframework.modulith.ApplicationModule;

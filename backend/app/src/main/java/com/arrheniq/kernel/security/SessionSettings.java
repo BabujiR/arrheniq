@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -45,7 +46,8 @@ public class SessionSettings {
     }
 
     /** Pure resolution with bounds: 1 min ≤ idle lock ≤ logoff ≤ 8 h. */
-    static Times resolve(String idleLockMinutes, String logoffMinutes, Duration defaultIdle, Duration defaultLogoff) {
+    static Times resolve(@Nullable String idleLockMinutes, @Nullable String logoffMinutes, Duration defaultIdle,
+                         Duration defaultLogoff) {
         Duration idle = clamp(parseMinutes(idleLockMinutes, defaultIdle));
         Duration logoff = clamp(parseMinutes(logoffMinutes, defaultLogoff));
         if (logoff.compareTo(idle) < 0) {
@@ -54,7 +56,7 @@ public class SessionSettings {
         return new Times(idle, logoff);
     }
 
-    private static Duration parseMinutes(String json, Duration fallback) {
+    private static Duration parseMinutes(@Nullable String json, Duration fallback) {
         if (json == null) {
             return fallback;
         }

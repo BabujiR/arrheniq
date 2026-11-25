@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import com.arrheniq.kernel.audit.AuditActor;
 import com.arrheniq.kernel.audit.AuditEventDraft;
 import com.arrheniq.kernel.audit.AuditService;
@@ -36,7 +37,7 @@ public class SecurityAuditor {
         this.requiresNew.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    public void record(UUID tenantId, AuditActor actor, String action, UUID userId, String businessKey,
+    public void record(UUID tenantId, AuditActor actor, String action, @Nullable UUID userId, @Nullable String businessKey,
                        List<FieldChange> details) {
         inTenantTransaction(tenantId, "security." + action.toLowerCase(Locale.ROOT), () -> {
             recordInCurrentTransaction(actor, action, userId, businessKey, details);
@@ -45,7 +46,8 @@ public class SecurityAuditor {
     }
 
     /** Appends an authentication event inside an already open tenant transaction (see {@link #inTenantTransaction}). */
-    public void recordInCurrentTransaction(AuditActor actor, String action, UUID userId, String businessKey,
+    public void recordInCurrentTransaction(AuditActor actor, String action, @Nullable UUID userId,
+                                           @Nullable String businessKey,
                                            List<FieldChange> details) {
         audit.record(actor, new AuditEventDraft(action, RECORD_TYPE, userId, null, businessKey, null,
                 details, null, null, null));
@@ -55,7 +57,7 @@ public class SecurityAuditor {
      * Runs {@code work} in a new transaction bound to the tenant (system context) with the audit
      * context opened, so it may write to GxP/SECURITY tables and append audit events.
      */
-    public <T> T inTenantTransaction(UUID tenantId, String operation, Supplier<T> work) {
+    public <T extends @Nullable Object> T inTenantTransaction(UUID tenantId, String operation, Supplier<T> work) {
         return TenantContextHolder.callAs(TenantContext.system(tenantId), () -> requiresNew.execute(status -> {
             audit.open(operation);
             return work.get();
