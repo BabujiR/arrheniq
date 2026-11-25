@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.annotation.AnnotationTemplateExpressionDefaults;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -12,6 +13,7 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import java.time.Clock;
@@ -63,14 +65,16 @@ public class SecurityConfig {
                 .logoutUrl("/auth/logout")
                 .addLogoutHandler(auditLogout)
                 .logoutSuccessHandler(logoutSuccess))
-            .csrf(csrf -> csrf.spa())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())   // SPA must read XSRF-TOKEN
+                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
             .exceptionHandling(ex -> ex.defaultAuthenticationEntryPointFor(new ProblemAuthenticationEntryPoint(),
                     PathPatternRequestMatcher.withDefaults().matcher("/api/**")))
             .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives(
                     "default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'")))
             .addFilterAfter(new SessionContextFilter(loader, tenants, auditor, props, clock), AuthorizationFilter.class)
-            .httpBasic(basic -> basic.disable())
-            .formLogin(form -> form.disable());
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable);
         return http.build();
     }
 

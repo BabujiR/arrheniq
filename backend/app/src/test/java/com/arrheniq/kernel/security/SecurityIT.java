@@ -127,7 +127,10 @@ class SecurityIT extends PostgresIntegrationTest {
         assertTrue(body.contains("study.create"), body);
         assertFalse(body.contains("result.approve.final"), "stability manager must not have QA approval: " + body);
         assertTrue(body.contains("\"allSites\":false"), body);
-        assertTrue(r.getResponse().getCookie("XSRF-TOKEN") != null, "CSRF cookie must be issued");
+        // the SPA reads the XSRF-TOKEN cookie and echoes it in the X-XSRF-TOKEN header (ADR 0006)
+        String setCookies = String.join(" | ", r.getResponse().getHeaders("Set-Cookie"));
+        boolean issued = r.getResponse().getCookie("XSRF-TOKEN") != null || setCookies.contains("XSRF-TOKEN=");
+        assertTrue(issued, "CSRF cookie must be issued; Set-Cookie headers: [" + setCookies + "]");
     }
 
     @Test
