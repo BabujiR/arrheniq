@@ -1,5 +1,10 @@
-# Security checks: secret scanning, dependency review and static analysis (CodeQL).
-# Plan: docs/ci/README.md (stage C3). Traces: URS-SEC-005, security-architecture.md §6 (T15, T17).
+# Security checks (docs/ci/README.md, stage C3). Traces: URS-SEC-005, security-architecture.md §6.
+#
+# GitHub's dependency review and CodeQL code scanning are free for PUBLIC repositories only.
+# Private repositories need GitHub Code Security. So:
+#   - public repo  → dependency-review + CodeQL (GitHub-native)
+#   - private repo → Trivy (vulnerable dependencies) + Semgrep CE (static analysis), both free
+# gitleaks runs in both cases.
 name: security
 
 on:
@@ -24,14 +29,40 @@ jobs:
         with:
           fetch-depth: 0
       - name: gitleaks
-        # Uses the open-source CLI image (no licence key needed).
         run: |
           docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
             git /repo --redact --verbose --exit-code 1
 
+  # ---------------------------------------------------------------- private repos (free tools)
+  dependency-scan:
+    name: Dependency vulnerabilities (Trivy)
+    if: ${{ github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy filesystem scan of Maven dependencies (fail on HIGH/CRITICAL)
+        run: |
+          docker run --rm -v "$PWD:/repo" aquasec/trivy:latest fs \
+            --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+            /repo/backend
+
+  static-analysis:
+    name: Static analysis (Semgrep CE)
+    if: ${{ github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep (Java + OWASP Top 10 rules)
+        run: |
+          docker run --rm -v "$PWD:/src" semgrep/semgrep:latest \
+            semgrep scan --config p/java --config p/owasp-top-ten --metrics off --error /src/backend
+
+  # ---------------------------------------------------------------- public repos (GitHub-native)
   dependency-review:
     name: Dependency review (PR)
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' && !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -46,6 +77,7 @@ jobs:
 
   codeql-java:
     name: CodeQL (Java)
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
