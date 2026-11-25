@@ -13,6 +13,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -109,7 +110,10 @@ class AuditServiceIT extends PostgresIntegrationTest {
     @Test
     void storedEventsCannotBeChangedOrDeletedEvenByTheSchemaOwner() throws SQLException {
         try (Connection c = ownerConnection(); Statement s = c.createStatement()) {
-            s.execute("SELECT set_config('app.tenant_id', '" + tenantA + "', false)");
+            try (PreparedStatement bind = c.prepareStatement("SELECT set_config('app.tenant_id', ?, false)")) {
+                bind.setString(1, tenantA.toString());
+                bind.execute();
+            }
             SQLException upd = assertThrows(SQLException.class,
                     () -> s.execute("UPDATE audit.audit_event SET reason = 'x' WHERE seq = 1"));
             assertTrue(upd.getMessage().contains("ARQ-AUDIT-002"), upd.getMessage());
