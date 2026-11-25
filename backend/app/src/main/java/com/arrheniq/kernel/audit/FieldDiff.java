@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.audit;
 
+import org.jspecify.annotations.Nullable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public final class FieldDiff {
      * @param after  snapshot after the change; {@code null} for a removed record
      * @return changes sorted by field name; empty if nothing changed
      */
-    public static List<FieldChange> between(Map<String, ?> before, Map<String, ?> after) {
+    public static List<FieldChange> between(@Nullable Map<String, ?> before, @Nullable Map<String, ?> after) {
         Set<String> fields = new TreeSet<>();
         if (before != null) {
             fields.addAll(before.keySet());
@@ -39,8 +40,8 @@ public final class FieldDiff {
             if (TECHNICAL_FIELDS.contains(field)) {
                 continue;
             }
-            Object oldValue = before == null ? null : before.get(field);
-            Object newValue = after == null ? null : after.get(field);
+            @Nullable Object oldValue = before == null ? null : before.get(field);
+            @Nullable Object newValue = after == null ? null : after.get(field);
             if (!sameValue(oldValue, newValue)) {
                 changes.add(new FieldChange(field, oldValue, newValue));
             }
@@ -48,7 +49,7 @@ public final class FieldDiff {
         return changes;
     }
 
-    static boolean sameValue(Object a, Object b) {
+    static boolean sameValue(@Nullable Object a, @Nullable Object b) {
         if (a instanceof BigDecimal x && b instanceof BigDecimal y) {
             return x.compareTo(y) == 0;
         }

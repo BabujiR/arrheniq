@@ -28,6 +28,14 @@ public record TenantContext(UUID tenantId, Optional<UUID> userId, boolean allSit
         }
     }
 
+    /**
+     * Context for platform-initiated work inside a tenant (login, session checks, jobs): tenant
+     * isolation applies, no user, all sites. Never use it for work a user asked for.
+     */
+    public static TenantContext system(UUID tenantId) {
+        return new TenantContext(tenantId, Optional.empty(), true, Set.of());
+    }
+
     public boolean canAccessSite(UUID siteId) {
         return allSites || siteIds.contains(siteId);
     }

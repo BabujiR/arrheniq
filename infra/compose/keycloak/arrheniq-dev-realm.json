@@ -2,6 +2,7 @@
   "realm": "arrheniq-dev",
   "enabled": true,
   "displayName": "ArrheniQ (local development)",
+  "loginTheme": "arrheniq",
   "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,

@@ -1,6 +1,6 @@
 # ADR 0013: Persistence: JPA for aggregates, plain SQL for read models; Flyway migrations
 
-- **Status:** Accepted (proposed by AI agent; pending founder review)
+- **Status:** Accepted, **amended by [ADR 0019](0019-sql-write-models-for-gxp-records-and-signature-flow.md)** (GxP writes use explicit SQL)
 - **Date:** 2026-11-25
 - **Deciders:** Founder (approver), AI engineering agent (author)
 

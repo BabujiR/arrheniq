@@ -9,6 +9,31 @@ spring:
   flyway:
     user: arrheniq_owner
     password: local-owner
+  security:
+    oauth2:
+      client:
+        registration:
+          arrheniq:
+            provider: keycloak
+            client-id: arrheniq-app
+            client-secret: local-dev-client-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: [openid, profile, email]
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/realms/arrheniq-dev
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false              # plain http on localhost only
+
+arrheniq:
+  security:
+    fixed-tenant-slug: tenant-a    # infra/compose dev realm users tadmin, smanager, qapprover
+    post-login-path: /api/v1/me    # until the React shell exists (S0.6)
 
 logging:
   level:

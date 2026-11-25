@@ -1,0 +1,299 @@
+/*
+ * ArrheniQ motion: short, purposeful, never on data values. Everything is switched off when the user's
+ * operating system asks for reduced motion (accessibility; WCAG 2.3.3).
+ */
+
+/* brand tokens (docs/brand/README.md); teal is lighter in dark mode to keep contrast */
+:root {
+  --arq-brand-indigo: #2e3192;
+  --arq-brand-teal: #0ca678;
+  --arq-font-brand: 'Space Grotesk', Inter, system-ui, sans-serif;
+}
+[data-mantine-color-scheme='dark'] {
+  --arq-brand-indigo: #c5c8ff;
+  --arq-brand-teal: #38d9a9;
+}
+
+/* logo: the stability curve draws itself, the "measurement" dot pulses */
+.arq-logo__curve {
+  stroke-dasharray: 64;
+  stroke-dashoffset: 0;
+}
+.arq-logo--draw .arq-logo__curve {
+  stroke-dashoffset: 64;
+  animation: arq-draw 1.1s 0.15s ease-out forwards;
+}
+.arq-logo--loop .arq-logo__curve {
+  animation: arq-draw-loop 1.8s ease-in-out infinite;
+}
+.arq-logo--draw .arq-logo__dot,
+.arq-logo--loop .arq-logo__dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: arq-pulse 1.8s ease-in-out infinite;
+}
+.arq-logo--draw .arq-logo__ring {
+  animation: arq-fade 0.5s ease-out both;
+}
+
+@keyframes arq-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes arq-draw-loop {
+  0% {
+    stroke-dashoffset: 64;
+  }
+  55% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -64;
+  }
+}
+@keyframes arq-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.55;
+  }
+}
+
+/* entrances: page headers, cards */
+.arq-pop {
+  animation: arq-pop 0.35s ease-out both;
+}
+.arq-fade-in {
+  animation: arq-fade 0.3s ease-out both;
+}
+@keyframes arq-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes arq-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- icons (components/icons.tsx) ---------- */
+.arq-icon {
+  overflow: visible;
+  transition: transform 180ms ease;
+}
+/* only the parts that move get their own origin; other parts (e.g. the capsule's rotate attribute) must
+   keep the default SVG origin or they shift */
+.arq-icon .liquid,
+.arq-icon .bubble,
+.arq-icon .arrow,
+.arq-icon .chev,
+.arq-icon .shackle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* soft two-tone fill */
+.arq-icon .d {
+  fill: currentColor;
+  fill-opacity: 0.16;
+  stroke: none;
+  transition: fill-opacity 180ms ease;
+}
+.arq-hover-icon:hover .arq-icon .d {
+  fill-opacity: 0.28;
+}
+
+/* draw-in: page header tile, newly active menu item */
+.arq-draw .arq-icon .s,
+.arq-active-icon .arq-icon .s {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: arq-icon-draw 0.7s cubic-bezier(0.65, 0, 0.35, 1) 0.1s forwards;
+}
+.arq-draw .arq-icon .d,
+.arq-active-icon .arq-icon .d {
+  animation: arq-icon-fill 0.5s ease-out 0.55s both;
+}
+@keyframes arq-icon-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes arq-icon-fill {
+  from {
+    fill-opacity: 0;
+  }
+}
+
+/* hover gestures, one per icon */
+.arq-hover-icon:hover .arq-icon {
+  transform: scale(1.08);
+}
+.arq-hover-icon:hover .arq-icon--home {
+  animation: arq-hop 0.45s ease-out;
+}
+.arq-hover-icon:hover .arq-icon--product {
+  animation: arq-wiggle 0.5s ease-in-out;
+}
+.arq-hover-icon:hover .arq-icon--test {
+  animation: arq-swing 0.6s ease-in-out;
+}
+.arq-icon--test .liquid {
+  transform-origin: bottom center;
+  transition: transform 300ms ease;
+}
+.arq-hover-icon:hover .arq-icon--test .liquid {
+  transform: scaleY(1.45);
+}
+.arq-icon--test .bubble {
+  opacity: 0;
+}
+.arq-hover-icon:hover .arq-icon--test .bubble {
+  animation: arq-bubble 0.9s ease-out infinite;
+}
+.arq-hover-icon:hover .arq-icon--plus,
+.arq-icon--plus:hover {
+  transform: rotate(90deg);
+}
+.arq-hover-icon:hover .arq-icon--sun {
+  transform: rotate(45deg) scale(1.08);
+}
+.arq-hover-icon:hover .arq-icon--moon {
+  transform: rotate(-18deg) scale(1.08);
+}
+.arq-icon--logout .arrow,
+.arq-icon .chev,
+.arq-icon--lock .shackle {
+  transition: transform 180ms ease;
+}
+.arq-hover-icon:hover .arq-icon--logout .arrow,
+.mantine-Menu-item:hover .arq-icon--logout .arrow {
+  transform: translateX(2px);
+}
+.arq-hover-icon:hover .arq-icon--collapse .chev {
+  transform: translateX(-2px);
+}
+.arq-hover-icon:hover .arq-icon--expand .chev {
+  transform: translateX(2px);
+}
+.arq-hover-icon:hover .arq-icon--lock .shackle {
+  transform: translateY(-1.5px);
+}
+@keyframes arq-hop {
+  40% {
+    transform: translateY(-2.5px) scale(1.08);
+  }
+}
+@keyframes arq-wiggle {
+  25% {
+    transform: rotate(-14deg) scale(1.08);
+  }
+  60% {
+    transform: rotate(9deg) scale(1.08);
+  }
+}
+@keyframes arq-swing {
+  30% {
+    transform: rotate(14deg);
+  }
+  70% {
+    transform: rotate(-8deg);
+  }
+}
+@keyframes arq-bubble {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+/* page header tile: brand gradient with a soft glow */
+.arq-tile {
+  box-shadow: 0 6px 16px -6px rgba(46, 49, 146, 0.55);
+}
+
+/* ---------- typography ---------- */
+.mantine-Title-root {
+  letter-spacing: -0.015em;
+}
+
+/* ---------- data grid (components/DataGrid.tsx) ---------- */
+.arq-grid .ag-header-cell-text {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* cards that navigate */
+.arq-card-link {
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+.arq-card-link:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mantine-shadow-md);
+}
+
+.arq-grid-empty {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arq-logo *,
+  .arq-pop,
+  .arq-fade-in,
+  .arq-icon,
+  .arq-icon *,
+  .arq-card-link {
+    animation: none !important;
+    transition: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
+
+/* welcome screen backdrop: the big curve draws in slowly once */
+.arq-backdrop-curve {
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+  animation: arq-backdrop 2.4s 0.2s ease-out forwards;
+}
+@keyframes arq-backdrop {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arq-backdrop-curve {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+.arq-welcome-bg {
+  background: #f6f7fb;
+}
+[data-mantine-color-scheme='dark'] .arq-welcome-bg {
+  background: var(--mantine-color-dark-8);
+}

@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.audit;
 
+import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -15,14 +16,14 @@ import java.util.UUID;
 public record AuditEventDraft(
         String action,
         String recordType,
-        UUID recordId,
-        Long recordVersion,
-        String businessKey,
-        UUID siteId,
-        List<FieldChange> changes,
-        String statusBefore,
-        String reason,
-        String reasonCode) {
+        @Nullable UUID recordId,
+        @Nullable Long recordVersion,
+        @Nullable String businessKey,
+        @Nullable UUID siteId,
+        @Nullable List<FieldChange> changes,
+        @Nullable String statusBefore,
+        @Nullable String reason,
+        @Nullable String reasonCode) {
 
     public AuditEventDraft {
         Objects.requireNonNull(action, "action");

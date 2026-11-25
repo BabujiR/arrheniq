@@ -9,3 +9,6 @@ CLAUDE.md
 
 # Build output
 target/
+
+# local transfer folder (never commit)
+_to_delete/

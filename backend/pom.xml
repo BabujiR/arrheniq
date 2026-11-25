@@ -35,8 +35,17 @@
         <java.version>25</java.version>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- Spring Modulith 2.1.x is the line built against Spring Boot 4.1 -->
+        <!-- Spring Modulith 2.2.x is the line built against Spring Boot 4.2 -->
         <spring-modulith.version>2.2.0</spring-modulith.version>
+        <!-- SECURITY OVERRIDE: Spring Boot 4.2.0 manages Tomcat 11.0.27, which has 8 CVEs fixed in 11.0.29
+             (tomcat.apache.org/security-11). Remove this line once the Spring Boot BOM manages >= 11.0.29. -->
+        <tomcat.version>11.0.29</tomcat.version>
+        <!-- SECURITY OVERRIDE: pgjdbc 42.7.14 (managed by Spring Boot 4.2.0) has 8 CVEs (CVE-2026-134841..134848)
+             fixed in 42.7.15 (23 Nov 2026). Remove once the Spring Boot BOM manages >= 42.7.15. -->
+        <postgresql.version>42.7.15</postgresql.version>
+        <!-- SECURITY OVERRIDE: commons-codec 1.22.1 (test scope, via spring-boot-starter-webmvc-test) has
+             CVE-2026-119078 and CVE-2026-124077, fixed in 1.23.0. Remove once the Spring Boot BOM manages >= 1.23.0. -->
+        <commons-codec.version>1.23.0</commons-codec.version>
     </properties>
 
     <dependencyManagement>

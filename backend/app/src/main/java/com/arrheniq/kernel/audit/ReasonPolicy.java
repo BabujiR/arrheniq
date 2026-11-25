@@ -10,7 +10,8 @@ import java.util.Set;
  * Always required (not configurable):
  * <ul>
  *   <li>any change to a record whose current status is locked (approved, effective, completed, signed…)</li>
- *   <li>logical deletion, reversals, manual schedule date changes, extra pulls, re-opening</li>
+ *   <li>logical deletion, retirement, rejection in review, reversals, manual schedule date changes, extra pulls,
+ *       re-opening</li>
  * </ul>
  * Tenants may add actions via {@code additionalActions} (tenant setting, versioned + audited).
  */
@@ -22,7 +23,8 @@ public final class ReasonPolicy {
 
     /** Actions that always need a reason, whatever the status. */
     public static final Set<String> ALWAYS_REQUIRED_ACTIONS = Set.of(
-            "LOGICAL_DELETE", "REVERSAL", "SCHEDULE_DATE_CHANGE", "EXTRA_PULL", "REOPEN", "SIGNATURE_REVOKE");
+            "LOGICAL_DELETE", "REVERSAL", "SCHEDULE_DATE_CHANGE", "EXTRA_PULL", "REOPEN", "SIGNATURE_REVOKE",
+            "RETIRE", "REJECT");
 
     /** Actions that never need a reason (creation, signing itself, logins). */
     private static final Set<String> EXEMPT_ACTIONS = Set.of("CREATE", "SIGN", "LOGIN_SUCCESS", "LOGIN_FAILURE", "EXPORT");

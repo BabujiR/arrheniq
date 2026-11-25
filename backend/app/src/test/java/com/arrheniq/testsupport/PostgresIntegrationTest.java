@@ -41,7 +41,25 @@ public abstract class PostgresIntegrationTest {
         registry.add("spring.datasource.password", () -> APP_PW);
         registry.add("spring.flyway.user", () -> "arrheniq_owner");
         registry.add("spring.flyway.password", () -> OWNER_PW);
+        // OIDC client pointing at a non-routable IdP: tests never complete a real login, they only
+        // check the redirects, and use a pre-built authentication for signed-in requests.
+        String reg = "spring.security.oauth2.client.registration.arrheniq.";
+        registry.add(reg + "provider", () -> "itidp");
+        registry.add(reg + "client-id", () -> "it-client");
+        registry.add(reg + "client-secret", () -> "it-secret");
+        registry.add(reg + "authorization-grant-type", () -> "authorization_code");
+        registry.add(reg + "redirect-uri", () -> "{baseUrl}/login/oauth2/code/{registrationId}");
+        registry.add(reg + "scope", () -> "openid,profile,email");
+        String idp = "spring.security.oauth2.client.provider.itidp.";
+        registry.add(idp + "authorization-uri", () -> IT_IDP + "/auth");
+        registry.add(idp + "token-uri", () -> IT_IDP + "/token");
+        registry.add(idp + "jwk-set-uri", () -> IT_IDP + "/jwks");
+        registry.add(idp + "user-info-uri", () -> IT_IDP + "/userinfo");
+        registry.add(idp + "user-name-attribute", () -> "sub");
     }
+
+    /** Base URL of the fake IdP used in integration tests (never contacted). */
+    protected static final String IT_IDP = "http://idp.invalid";
 
     private static synchronized void startOnce() throws SQLException {
         if (bootstrapped) {
