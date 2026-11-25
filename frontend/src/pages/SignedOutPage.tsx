@@ -1,4 +1,5 @@
-import { Button, Center, Paper, Stack, Text, Title } from '@mantine/core';
+import { Button, Center, Paper, Stack, Text } from '@mantine/core';
+import { Logo } from '../brand/Logo';
 import { goToLogin } from '../auth/navigation';
 
 const MESSAGES: Record<string, string> = {
@@ -12,11 +13,16 @@ export function SignedOutPage() {
   const error = new URLSearchParams(window.location.search).get('error') ?? '';
   return (
     <Center h="100vh">
-      <Paper withBorder p="xl" w={440}>
-        <Stack>
-          <Title order={3}>ArrheniQ</Title>
+      <Paper withBorder radius="md" shadow="sm" p="xl" w={440} className="arq-fade-in">
+        <Stack align="center" ta="center">
+          <Logo size={56} motion="draw" />
+          <Text c="dimmed" size="sm">
+            Intelligent stability. Predictable shelf life.
+          </Text>
           <Text>{MESSAGES[error] ?? 'You are signed out.'}</Text>
-          <Button onClick={() => goToLogin('/')}>Sign in</Button>
+          <Button fullWidth onClick={() => goToLogin('/')}>
+            Sign in
+          </Button>
         </Stack>
       </Paper>
     </Center>

@@ -11,6 +11,7 @@ import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import { ApiError } from './api/http';
 import { router } from './router';
 import { theme } from './theme';
+import './brand/brand.css';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -31,7 +32,7 @@ if (!container) {
 
 createRoot(container).render(
   <StrictMode>
-    <MantineProvider theme={theme}>
+    <MantineProvider theme={theme} defaultColorScheme="light">
       <Notifications position="top-right" />
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />

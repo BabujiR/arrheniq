@@ -1,6 +1,7 @@
-import { Navigate, Outlet, createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
+import { Outlet, createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { SessionProvider } from './auth/SessionProvider';
 import { AppLayout } from './layout/AppLayout';
+import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { ProductsPage } from './pages/ProductsPage';
@@ -27,12 +28,21 @@ const appRoute = createRoute({
   ),
 });
 
-const indexRoute = createRoute({
-  getParentRoute: () => appRoute,
-  path: '/',
-  component: () => <Navigate to="/products" />,
+/** `?new=1` opens the create dialog (quick actions on the home page). */
+export interface ListSearch {
+  new?: string;
+}
+const listSearch = (search: Record<string, unknown>): ListSearch => ({
+  new: typeof search.new === 'string' ? search.new : undefined,
 });
-const productsRoute = createRoute({ getParentRoute: () => appRoute, path: '/products', component: ProductsPage });
+
+const indexRoute = createRoute({ getParentRoute: () => appRoute, path: '/', component: HomePage });
+const productsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/products',
+  component: ProductsPage,
+  validateSearch: listSearch,
+});
 const productRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/products/$productId',
@@ -42,6 +52,7 @@ const testMethodsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/test-methods',
   component: TestMethodsPage,
+  validateSearch: listSearch,
 });
 
 const routeTree = rootRoute.addChildren([

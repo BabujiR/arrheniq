@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Button, Group, Select, TextInput, Title } from '@mantine/core';
+import { Button, Select, TextInput } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { keys, productsApi } from '../api/masterdata';
@@ -9,7 +9,10 @@ import type { Product } from '../api/types';
 import { useSession } from '../auth/SessionProvider';
 import { DataGrid } from '../components/DataGrid';
 import { label } from '../components/format';
+import { IconPlus, IconProduct } from '../components/icons';
+import { PageHeader } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
+import { useCreateParam } from '../components/useCreateParam';
 import { ProductForm } from './ProductForm';
 
 /** Product list (URS-MD-002); only products of sites the user can see are returned by the server. */
@@ -22,6 +25,7 @@ export function ProductsPage() {
   const filter = { q: debouncedQ || undefined, status: status ?? undefined };
   const products = useQuery({ queryKey: keys.products(filter), queryFn: () => productsApi.list(filter) });
   const [creating, setCreating] = useState(false);
+  useCreateParam('products', () => setCreating(true));
   const siteCode = new Map(me.sites.map((s) => [s.id, s.code]));
 
   const columns: ColDef<Product>[] = [
@@ -47,26 +51,41 @@ export function ProductsPage() {
 
   return (
     <>
-      <Group justify="space-between" mb="md">
-        <Title order={3}>Products</Title>
-        <Group>
-          <TextInput placeholder="Search code or name" value={q} onChange={(e) => setQ(e.currentTarget.value)} />
-          <Select
-            placeholder="All statuses"
-            clearable
-            w={160}
-            data={['DRAFT', 'IN_REVIEW', 'APPROVED', 'RETIRED'].map((s) => ({ value: s, label: label(s) }))}
-            value={status}
-            onChange={setStatus}
-          />
-          {can('product.manage') && <Button onClick={() => setCreating(true)}>New product</Button>}
-        </Group>
-      </Group>
+      <PageHeader
+        icon={<IconProduct size={24} />}
+        title="Products"
+        description="Drug substances and products with structured shelf life. Approval is an electronic signature."
+        actions={
+          <>
+            <TextInput placeholder="Search code or name" value={q} onChange={(e) => setQ(e.currentTarget.value)} />
+            <Select
+              placeholder="All statuses"
+              clearable
+              w={160}
+              data={['DRAFT', 'IN_REVIEW', 'APPROVED', 'RETIRED'].map((s) => ({ value: s, label: label(s) }))}
+              value={status}
+              onChange={setStatus}
+            />
+            {can('product.manage') && (
+              <Button leftSection={<IconPlus />} onClick={() => setCreating(true)}>
+                New product
+              </Button>
+            )}
+          </>
+        }
+      />
       <DataGrid
         rows={products.data}
         columns={columns}
         rowId={(p) => p.id}
         loading={products.isPending}
+        emptyMessage={
+          q || status
+            ? 'No product matches your search.'
+            : can('product.manage')
+              ? 'No products yet. Use “New product” to create the first one.'
+              : 'No products yet.'
+        }
         onRowClick={(p) => void navigate({ to: '/products/$productId', params: { productId: p.id } })}
       />
       <ProductForm

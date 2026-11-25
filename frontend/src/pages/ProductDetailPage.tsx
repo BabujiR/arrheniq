@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { Alert, Anchor, Button, Card, Center, Group, Loader, Modal, SimpleGrid, Stack, Text, Textarea, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Card, Center, Group, Loader, Modal, SimpleGrid, Stack, Text, Textarea, ThemeIcon, Title } from '@mantine/core';
 import { ApiError } from '../api/http';
 import { keys, productsApi } from '../api/masterdata';
 import type { Product, ProductDetails, Signature } from '../api/types';
@@ -10,7 +10,9 @@ import { goToReauth } from '../auth/navigation';
 import { formatInstant, label } from '../components/format';
 import { notifyError, notifySuccess } from '../components/notify';
 import { ReasonModal } from '../components/ReasonModal';
+import { IconArchive, IconEdit, IconProduct, IconReject, IconSend, IconSignature } from '../components/icons';
 import { StatusBadge } from '../components/StatusBadge';
+import { WorkflowStepper } from '../components/WorkflowStepper';
 import { rememberPendingSignature, takePendingSignature } from '../signing/pendingSignature';
 import { ProductForm } from './ProductForm';
 
@@ -116,45 +118,65 @@ export function ProductDetailPage() {
   return (
     <Stack>
       <Group justify="space-between">
-        <Group>
-          <Anchor size="sm" onClick={() => void navigate({ to: '/products' })}>
-            ← Products
-          </Anchor>
-          <Title order={3}>
-            {p.code} · {p.name}
-          </Title>
-          <StatusBadge status={p.status} />
+        <Group wrap="nowrap" align="flex-start">
+          <ThemeIcon size={42} radius="md" variant="light" color="indigo" className="arq-pop">
+            <IconProduct size={24} />
+          </ThemeIcon>
+          <Stack gap={2}>
+            <Anchor size="xs" onClick={() => void navigate({ to: '/products' })}>
+              ← All products
+            </Anchor>
+            <Group gap="sm">
+              <Title order={3}>
+                {p.code} · {p.name}
+              </Title>
+              <StatusBadge status={p.status} />
+            </Group>
+          </Stack>
         </Group>
         <Group>
           {can('product.manage') && (p.status === 'DRAFT' || p.status === 'APPROVED') && (
-            <Button variant="default" disabled={busy} onClick={() => setEditing(true)}>
+            <Button variant="default" leftSection={<IconEdit />} disabled={busy} onClick={() => setEditing(true)}>
               Edit
             </Button>
           )}
           {can('product.manage') && p.status === 'DRAFT' && (
-            <Button disabled={busy} loading={submit.isPending} onClick={() => submit.mutate(p)}>
+            <Button leftSection={<IconSend />} disabled={busy} loading={submit.isPending} onClick={() => submit.mutate(p)}>
               Submit for approval
             </Button>
           )}
           {can('product.approve') && p.status === 'IN_REVIEW' && (
             <>
-              <Button color="red" variant="light" disabled={busy} onClick={() => setReasonAction('reject')}>
+              <Button color="red" variant="light" leftSection={<IconReject />} disabled={busy}
+                      onClick={() => setReasonAction('reject')}>
                 Reject
               </Button>
-              <Button color="green" disabled={busy} loading={approve.isPending} onClick={() => setApproveOpen(true)}>
+              <Button color="teal" leftSection={<IconSignature />} disabled={busy} loading={approve.isPending}
+                      onClick={() => setApproveOpen(true)}>
                 Approve
               </Button>
             </>
           )}
           {can('product.manage') && p.status !== 'RETIRED' && (
-            <Button color="gray" variant="subtle" disabled={busy} onClick={() => setReasonAction('retire')}>
+            <Button color="gray" variant="subtle" leftSection={<IconArchive />} disabled={busy}
+                    onClick={() => setReasonAction('retire')}>
               Retire
             </Button>
           )}
         </Group>
       </Group>
 
-      <Card withBorder>
+      <Card withBorder radius="md" className="arq-fade-in">
+        {p.status === 'RETIRED' ? (
+          <Alert color="gray" title="Retired" icon={<IconArchive />}>
+            This product can no longer be used for new studies. Its history and signatures remain available.
+          </Alert>
+        ) : (
+          <WorkflowStepper status={p.status} />
+        )}
+      </Card>
+
+      <Card withBorder radius="md" className="arq-fade-in">
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
           <Field name="Site" value={site ? `${site.code} — ${site.name}` : p.siteId} />
           <Field name="Product type" value={label(p.productType)} />
@@ -180,10 +202,13 @@ export function ProductDetailPage() {
         )}
       </Card>
 
-      <Card withBorder>
-        <Title order={5} mb="sm">
-          Electronic signatures
-        </Title>
+      <Card withBorder radius="md" className="arq-fade-in">
+        <Group gap="xs" mb="sm">
+          <ThemeIcon size={28} radius="md" variant="light" color="teal">
+            <IconSignature />
+          </ThemeIcon>
+          <Title order={5}>Electronic signatures</Title>
+        </Group>
         {details.data.signatures.length === 0 ? (
           <Text size="sm" c="dimmed">
             Not signed yet.
@@ -231,7 +256,7 @@ export function ProductDetailPage() {
             <Button variant="default" onClick={() => setApproveOpen(false)}>
               Cancel
             </Button>
-            <Button color="green" onClick={startApproval}>
+            <Button color="teal" leftSection={<IconSignature />} onClick={startApproval}>
               Sign in again and approve
             </Button>
           </Group>

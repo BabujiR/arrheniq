@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Center, Loader, Modal, Stack, Text } from '@mantine/core';
+import { Button, Center, Group, Modal, Stack, Text, ThemeIcon } from '@mantine/core';
 import { api, ApiError, onAuthProblem } from '../api/http';
 import { keys } from '../api/masterdata';
 import type { Me } from '../api/types';
 import { can as canCheck } from './permissions';
+import { Logo } from '../brand/Logo';
+import { IconLock } from '../components/icons';
 import { goToLogin, goToReauth } from './navigation';
 
 interface Session {
@@ -50,6 +52,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return (
       <Center h="100vh">
         <Stack align="center">
+          <Logo size={48} />
           <Text>ArrheniQ is not reachable right now ({me.error.message}).</Text>
           <Button variant="light" onClick={() => void me.refetch()}>
             Try again
@@ -63,7 +66,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // on 401 the listener is already redirecting to the login page
     return (
       <Center h="100vh">
-        <Loader />
+        <Stack align="center" gap="xs">
+          <Logo size={64} motion="loop" />
+          <Text size="sm" c="dimmed">
+            Loading your workspace…
+          </Text>
+        </Stack>
       </Center>
     );
   }
@@ -86,14 +94,23 @@ function LockScreen({ opened, name }: { opened: boolean; name: string }) {
       closeOnClickOutside={false}
       closeOnEscape={false}
       centered
-      title="Session locked"
+      title={
+        <Group gap="xs">
+          <ThemeIcon variant="light" color="yellow" radius="xl">
+            <IconLock />
+          </ThemeIcon>
+          <Text fw={600}>Session locked</Text>
+        </Group>
+      }
     >
       <Stack>
         <Text size="sm">
           Your session was locked after a period of inactivity. Sign in again as <b>{name}</b> to continue where you
           left off.
         </Text>
-        <Button onClick={() => goToReauth('UNLOCK')}>Unlock</Button>
+        <Button leftSection={<IconLock />} onClick={() => goToReauth('UNLOCK')}>
+          Unlock
+        </Button>
       </Stack>
     </Modal>
   );
