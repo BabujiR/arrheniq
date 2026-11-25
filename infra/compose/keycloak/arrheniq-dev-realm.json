@@ -1,0 +1,75 @@
+{
+  "realm": "arrheniq-dev",
+  "enabled": true,
+  "displayName": "ArrheniQ (local development)",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "clients": [
+    {
+      "clientId": "arrheniq-app",
+      "name": "ArrheniQ app (BFF)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "local-dev-client-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8080/login/oauth2/code/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": ["http://localhost:8080", "http://localhost:5173"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:8080/*##http://localhost:5173/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "tadmin",
+      "email": "tadmin@tenant-a.local",
+      "firstName": "Tara",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "dev-password", "temporary": false }]
+    },
+    {
+      "username": "smanager",
+      "email": "smanager@tenant-a.local",
+      "firstName": "Sam",
+      "lastName": "Manager",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "dev-password", "temporary": false }]
+    },
+    {
+      "username": "qapprover",
+      "email": "qapprover@tenant-a.local",
+      "firstName": "Quinn",
+      "lastName": "Approver",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "dev-password", "temporary": false }]
+    },
+    {
+      "username": "bmanager",
+      "email": "bmanager@tenant-b.local",
+      "firstName": "Blake",
+      "lastName": "Manager",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "dev-password", "temporary": false }]
+    }
+  ]
+}

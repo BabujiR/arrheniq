@@ -1,0 +1,51 @@
+# ArrheniQ local development environment (docs/architecture/deployment-architecture.md §4, "local").
+# Start:  docker compose -f infra/compose/docker-compose.yml up -d
+# Stop:   docker compose -f infra/compose/docker-compose.yml down        (add -v to wipe data)
+#
+# Services
+#   postgres  PostgreSQL 16, bootstrapped with arrheniq_* roles + database (passwords match application-local.yml)
+#   keycloak  test identity provider (OIDC) with realm "arrheniq-dev": stands in for Cognito / customer IdPs
+#   mailpit   catches outgoing email (notifications) with a web UI
+# Object storage (S3 with object lock) is added in the slice that first stores documents.
+# DEV ONLY: all passwords here are local test values. Never reuse them.
+name: arrheniq-local
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      ARQ_OWNER_PASSWORD: local-owner
+      ARQ_APP_PASSWORD: local-app
+      ARQ_PLATFORM_PASSWORD: local-platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/10-arrheniq-bootstrap.sh:/docker-entrypoint-initdb.d/10-arrheniq-bootstrap.sh:ro
+      - ../../backend/app/src/main/resources/db/bootstrap/00_roles_and_database.sql:/arrheniq/00_roles_and_database.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d arrheniq"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm", "--http-port=8180"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./keycloak/arrheniq-dev-realm.json:/opt/keycloak/data/import/arrheniq-dev-realm.json:ro
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"   # web UI
+      - "1025:1025"   # SMTP
+
+volumes:
+  pgdata:
