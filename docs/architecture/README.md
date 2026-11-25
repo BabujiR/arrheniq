@@ -11,7 +11,7 @@ Status: **DRAFT v0.1** (2026-11-25). Inputs: `docs/discovery/*`, `docs/product/*
 | [audit-esignature.md](audit-esignature.md) | Part 11 design: audit events, hash chain, anchoring, reasons, record versions, e-signature flow |
 | [security-architecture.md](security-architecture.md) | STRIDE threat model, controls, secure SDLC, legacy findings → controls |
 | [nfr.md](nfr.md) | Performance, availability, RPO/RTO, scalability, and cost per tenant |
-| [../adr/](../adr/) | Architecture Decision Records 0001–0016 |
+| [../adr/](../adr/) | Architecture Decision Records 0001–0017 |
 
 ## Architecture in one paragraph
 ArrheniQ is a **modular monolith** (Java 25, Spring Boot 4.1, Spring Modulith) with a **stateless Python statistics service** (FastAPI) and a **React 19 SPA** served through a **backend-for-frontend session** (no tokens in the browser). All data lives in **PostgreSQL 16** with **row-level security per tenant**. GxP documents go to **S3-compatible object storage with object lock**. Every GxP write goes through one **audit and e-signature kernel** that writes hash-chained audit events in the same transaction. Background work uses a **PostgreSQL-backed job queue and transactional outbox**, with no message broker. Identity is **standard OIDC/SAML**: Amazon Cognito in the cloud, the customer's IdP in private installs. The same signed container images run in **Cloud (ECS Fargate), Dedicated, and Private (Helm / Docker Compose)** deployments.

@@ -1,6 +1,6 @@
 # ADR 0014: Monorepo with Gradle (Kotlin DSL), pnpm and uv; GitHub Actions
 
-- **Status:** Accepted (proposed by AI agent; pending founder review)
+- **Status:** Partly superseded by [ADR 0017](0017-maven-multi-module-build-for-the-backend.md) (2026-11-25): the backend build tool is **Maven**, not Gradle. The monorepo decision, pnpm, uv and GitHub Actions still stand.
 - **Date:** 2026-11-25
 - **Deciders:** Founder (approver), AI engineering agent (author)
 
