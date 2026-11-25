@@ -7,6 +7,7 @@ import com.arrheniq.kernel.tenancy.TenantContext;
 import com.arrheniq.kernel.tenancy.TenantContextHolder;
 import com.arrheniq.testsupport.PostgresIntegrationTest;
 import com.arrheniq.testsupport.Requirement;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -127,10 +125,8 @@ class SecurityIT extends PostgresIntegrationTest {
         assertTrue(body.contains("study.create"), body);
         assertFalse(body.contains("result.approve.final"), "stability manager must not have QA approval: " + body);
         assertTrue(body.contains("\"allSites\":false"), body);
-        // the SPA reads the XSRF-TOKEN cookie and echoes it in the X-XSRF-TOKEN header (ADR 0006)
-        String setCookies = String.join(" | ", r.getResponse().getHeaders("Set-Cookie"));
-        boolean issued = r.getResponse().getCookie("XSRF-TOKEN") != null || setCookies.contains("XSRF-TOKEN=");
-        assertTrue(issued, "CSRF cookie must be issued; Set-Cookie headers: [" + setCookies + "]");
+        assertTrue(r.getResponse().getCookie("XSRF-TOKEN") != null, "CSRF cookie must be issued: "
+                + r.getResponse().getHeaders("Set-Cookie"));
     }
 
     @Test
@@ -201,13 +197,26 @@ class SecurityIT extends PostgresIntegrationTest {
         assertTrue(idp.contains("login_hint=smanager"), idp);
     }
 
+    /**
+     * The real SPA flow (ADR 0006): read the XSRF-TOKEN cookie, send it back in the X-XSRF-TOKEN header.
+     * Deliberately not using Spring's csrf() test helper: it replaces the CsrfFilter's token repository
+     * in the shared application context, which would hide the cookie from every later test.
+     */
     @Test
-    void logoutNeedsCsrfTokenAndIsAudited() throws Exception {
+    void logoutNeedsTheSpaCsrfTokenAndIsAudited() throws Exception {
         MockHttpSession session = activeSession();
+        MvcResult me = mvc.perform(get("/api/v1/me").with(authentication(auth())).session(session)).andReturn();
+        Cookie xsrf = me.getResponse().getCookie("XSRF-TOKEN");
+        assertNotNull(xsrf, "CSRF cookie must be issued: " + me.getResponse().getHeaders("Set-Cookie"));
+
         assertEquals(403, mvc.perform(post("/auth/logout").with(authentication(auth())).session(session))
-                .andReturn().getResponse().getStatus());
-        MvcResult ok = mvc.perform(post("/auth/logout").with(csrf()).with(authentication(auth())).session(session))
-                .andReturn();
+                .andReturn().getResponse().getStatus(), "logout without CSRF token must be refused");
+        assertEquals(403, mvc.perform(post("/auth/logout").cookie(xsrf).header("X-XSRF-TOKEN", "forged")
+                .with(authentication(auth())).session(session)).andReturn().getResponse().getStatus(),
+                "a wrong token must be refused");
+
+        MvcResult ok = mvc.perform(post("/auth/logout").cookie(xsrf).header("X-XSRF-TOKEN", xsrf.getValue())
+                .with(authentication(auth())).session(session)).andReturn();
         assertEquals(302, ok.getResponse().getStatus());
         assertTrue(auditActions().contains("LOGOUT"));
     }
