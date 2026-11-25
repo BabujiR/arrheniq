@@ -70,6 +70,12 @@ flowchart LR
 - Logic lives in versioned scripts (`scripts/ci/*`) so it can be run and debugged locally. Workflows stay thin.
 - Test reports and evidence artifacts are retained for 90 days in CI. Released evidence packs are archived permanently with the release (validation record).
 
+## Frontend workflow
+
+`.github/workflows/ci-frontend.yml` runs on changes under `frontend/`: `pnpm install --frozen-lockfile`, type check,
+Vitest, production build and `pnpm audit --prod --audit-level high`; the `dist/` build is kept for 14 days.
+Commit `frontend/pnpm-lock.yaml` so the install is reproducible.
+
 ## Dependency security overrides
 
 Versions we pin above what the Spring Boot BOM manages, because a CVE fix was released before Spring Boot picked it up.

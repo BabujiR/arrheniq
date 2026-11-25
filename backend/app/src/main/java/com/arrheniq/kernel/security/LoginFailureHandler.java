@@ -18,6 +18,12 @@ import java.io.IOException;
 @Component
 public class LoginFailureHandler implements AuthenticationFailureHandler {
 
+    private final ArrheniqSecurityProperties props;
+
+    public LoginFailureHandler(ArrheniqSecurityProperties props) {
+        this.props = props;
+    }
+
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
@@ -26,6 +32,6 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
         if (session != null) {
             session.invalidate();
         }
-        response.sendRedirect(request.getContextPath() + "/auth/signed-out?error=" + (wasReauth ? "reauth" : "login"));
+        response.sendRedirect(request.getContextPath() + props.signedOutPath() + "?error=" + (wasReauth ? "reauth" : "login"));
     }
 }

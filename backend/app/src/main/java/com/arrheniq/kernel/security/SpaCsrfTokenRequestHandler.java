@@ -2,20 +2,22 @@ package com.arrheniq.kernel.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
-import org.springframework.util.StringUtils;
 
 import java.util.function.Supplier;
 
 /**
- * CSRF handling for the React SPA (ADR 0006), following the Spring Security reference recipe:
+ * CSRF handling for the React SPA (ADR 0006):
  * <ul>
  *   <li>the token is loaded on every request, so the {@code XSRF-TOKEN} cookie is always present for the SPA</li>
- *   <li>a token sent in the {@code X-XSRF-TOKEN} header (the SPA reads the raw cookie) is compared as-is</li>
- *   <li>a token sent as a form parameter is BREACH-protected (XOR-masked), as in server-rendered pages</li>
+ *   <li>the SPA echoes the raw cookie value, in the {@code X-XSRF-TOKEN} header for API calls and in the
+ *       {@code _csrf} field of the logout form (a form POST, so the browser can follow the redirect to the IdP's
+ *       logout page)</li>
+ *   <li>XOR masking (BREACH protection) is not needed: the server never renders the token into an HTML page</li>
  * </ul>
  */
 final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
@@ -30,8 +32,7 @@ final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
     }
 
     @Override
-    public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
-        String header = request.getHeader(csrfToken.getHeaderName());
-        return (StringUtils.hasText(header) ? this.plain : this.xor).resolveCsrfTokenValue(request, csrfToken);
+    public @Nullable String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+        return this.plain.resolveCsrfTokenValue(request, csrfToken);
     }
 }

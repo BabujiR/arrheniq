@@ -41,13 +41,13 @@ public class SecurityConfig {
                                             ArrheniqOidcUserService oidcUserService, LoginSuccessHandler onSuccess,
                                             LoginFailureHandler onFailure, AuditLogoutHandler auditLogout,
                                             CurrentUserLoader loader, TenantResolver tenants, SecurityAuditor auditor,
-                                            ArrheniqSecurityProperties props, Clock clock) throws Exception {
+                                            ArrheniqSecurityProperties props, Clock clock) {
         DefaultOAuth2AuthorizationRequestResolver resolver = new DefaultOAuth2AuthorizationRequestResolver(
                 registrations, OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI);
         resolver.setAuthorizationRequestCustomizer(new ReauthAuthorizationRequestCustomizer());
 
         OidcClientInitiatedLogoutSuccessHandler logoutSuccess = new OidcClientInitiatedLogoutSuccessHandler(registrations);
-        logoutSuccess.setPostLogoutRedirectUri("{baseUrl}/auth/signed-out");
+        logoutSuccess.setPostLogoutRedirectUri("{baseUrl}" + props.signedOutPath());
 
         http
             .authorizeHttpRequests(auth -> auth

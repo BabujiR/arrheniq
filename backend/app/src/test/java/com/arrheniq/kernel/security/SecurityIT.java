@@ -113,7 +113,7 @@ class SecurityIT extends PostgresIntegrationTest {
     void openRedirectTargetsAreIgnored() throws Exception {
         MockHttpSession session = new MockHttpSession();
         mvc.perform(get("/auth/login").param("returnTo", "https://evil.example/").session(session));
-        assertEquals(null, session.getAttribute(SessionKeys.RETURN_TO));
+        assertNull(session.getAttribute(SessionKeys.RETURN_TO));
     }
 
     @Test
@@ -125,7 +125,8 @@ class SecurityIT extends PostgresIntegrationTest {
         assertTrue(body.contains("study.create"), body);
         assertFalse(body.contains("result.approve.final"), "stability manager must not have QA approval: " + body);
         assertTrue(body.contains("\"allSites\":false"), body);
-        assertTrue(r.getResponse().getCookie("XSRF-TOKEN") != null, "CSRF cookie must be issued: "
+        assertTrue(body.contains("\"sites\":[{") && body.contains("\"code\":\"S1\""), "site picker data: " + body);
+        assertNotNull(r.getResponse().getCookie("XSRF-TOKEN"), "CSRF cookie must be issued: "
                 + r.getResponse().getHeaders("Set-Cookie"));
     }
 

@@ -2,6 +2,7 @@ package com.arrheniq.kernel.security;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.time.Duration;
 
@@ -18,33 +19,43 @@ import java.time.Duration;
  * @param reauthFlowTimeout       a started re-authentication must finish within this time
  * @param reauthMaxAge            re-authentication evidence is usable for this long (signatures)
  * @param postLoginPath           where to go after login when no safe return path was given
+ * @param signedOutPath           SPA page shown after logout or a failed login ({@code ?error=login|reauth})
  */
 @ConfigurationProperties("arrheniq.security")
 public record ArrheniqSecurityProperties(
-        String registrationId,
+        @DefaultValue("arrheniq") String registrationId,
         @Nullable String baseDomain,
         @Nullable String fixedTenantSlug,
-        Duration absoluteSessionLifetime,
-        Duration defaultIdleLock,
-        Duration defaultLogoff,
-        Duration reauthFlowTimeout,
-        Duration reauthMaxAge,
-        String postLoginPath) {
+        @DefaultValue("12h") Duration absoluteSessionLifetime,
+        @DefaultValue("30m") Duration defaultIdleLock,
+        @DefaultValue("60m") Duration defaultLogoff,
+        @DefaultValue("10m") Duration reauthFlowTimeout,
+        @DefaultValue("5m") Duration reauthMaxAge,
+        @DefaultValue("/") String postLoginPath,
+        @DefaultValue("/signed-out") String signedOutPath) {
 
+    /** Spring supplies the defaults above for missing properties; wrong values stop the application at startup. */
     public ArrheniqSecurityProperties {
-        registrationId = blankTo(registrationId, "arrheniq");
-        absoluteSessionLifetime = absoluteSessionLifetime == null ? Duration.ofHours(12) : absoluteSessionLifetime;
-        defaultIdleLock = defaultIdleLock == null ? Duration.ofMinutes(30) : defaultIdleLock;
-        defaultLogoff = defaultLogoff == null ? Duration.ofMinutes(60) : defaultLogoff;
-        reauthFlowTimeout = reauthFlowTimeout == null ? Duration.ofMinutes(10) : reauthFlowTimeout;
-        reauthMaxAge = reauthMaxAge == null ? Duration.ofMinutes(5) : reauthMaxAge;
-        postLoginPath = SafeRedirects.orDefault(postLoginPath, "/");
-        if (fixedTenantSlug != null && !fixedTenantSlug.isBlank() && !TenantHosts.isValidSlug(fixedTenantSlug)) {
-            throw new IllegalArgumentException("arrheniq.security.fixed-tenant-slug is not a valid slug");
+        require(!registrationId.isBlank(), "registration-id must not be blank");
+        requirePositive(absoluteSessionLifetime, "absolute-session-lifetime");
+        requirePositive(defaultIdleLock, "default-idle-lock");
+        requirePositive(defaultLogoff, "default-logoff");
+        requirePositive(reauthFlowTimeout, "reauth-flow-timeout");
+        requirePositive(reauthMaxAge, "reauth-max-age");
+        require(SafeRedirects.isSafe(postLoginPath), "post-login-path must be a same-origin path such as /");
+        require(SafeRedirects.isSafe(signedOutPath), "signed-out-path must be a same-origin path such as /signed-out");
+        if (fixedTenantSlug != null && !fixedTenantSlug.isBlank()) {
+            require(TenantHosts.isValidSlug(fixedTenantSlug), "fixed-tenant-slug is not a valid tenant slug");
         }
     }
 
-    private static String blankTo(@Nullable String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
+    private static void requirePositive(Duration d, String name) {
+        require(!d.isNegative() && !d.isZero(), name + " must be greater than zero");
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new IllegalArgumentException("arrheniq.security." + message);
+        }
     }
 }
