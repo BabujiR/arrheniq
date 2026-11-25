@@ -1,0 +1,8 @@
+# Local-only working documents (not tracked)
+docs/discovery/
+docs/product/
+ArrheniQ_Master_Prompt.md
+CLAUDE.md
+
+# IDE
+.idea/
