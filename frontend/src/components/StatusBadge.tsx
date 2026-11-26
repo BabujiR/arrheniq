@@ -4,6 +4,7 @@ const COLORS: Record<string, string> = {
   DRAFT: 'gray',
   IN_REVIEW: 'yellow',
   APPROVED: 'green',
+  EFFECTIVE: 'green',
   RETIRED: 'dark',
   ACTIVE: 'green',
   VALID: 'green',

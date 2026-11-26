@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -30,6 +31,7 @@ import java.util.UUID;
  */
 @Component
 @Profile("local")
+@Order(1)
 class LocalDevData implements ApplicationRunner {
 
     static final UUID TENANT_A = UUID.fromString("a0000000-0000-4000-8000-00000000000a");

@@ -2,15 +2,25 @@ import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Button, Card, Group, SimpleGrid, Skeleton, Stack, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
-import { keys, productsApi, testMethodsApi } from '../api/masterdata';
+import { keys, productsApi, protocolsApi, specificationsApi, testMethodsApi } from '../api/masterdata';
 import type { Product } from '../api/types';
 import { useSession } from '../auth/SessionProvider';
 import { EmptyState } from '../components/EmptyState';
 import { formatInstant } from '../components/format';
-import { IconApproved, IconCheck, IconDraft, IconHome, IconPlus, IconProduct, IconReview, IconTest } from '../components/icons';
+import { IconApproved, IconCalendar, IconCheck, IconDraft, IconHome, IconPlus, IconProduct, IconReview, IconSpec, IconTest } from '../components/icons';
 import { PageHeader } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
 import { useCountUp } from '../components/useCountUp';
+
+/** One thing on a work list: a product, a specification version or a protocol version. */
+interface WorkItem {
+  key: string;
+  icon: ReactNode;
+  title: string;
+  detail: string;
+  status: string;
+  open: () => void;
+}
 
 function greeting(date = new Date()): string {
   const h = date.getHours();
@@ -33,13 +43,68 @@ export function HomePage() {
     enabled: canView,
   });
 
+  const specs = useQuery({
+    queryKey: keys.specifications({}),
+    queryFn: () => specificationsApi.list({}),
+    enabled: canView,
+  });
+  const protocols = useQuery({
+    queryKey: keys.protocols({}),
+    queryFn: () => protocolsApi.list({}),
+    enabled: canView,
+  });
+
   const all = products.data ?? [];
   const count = (status: Product['status']) => all.filter((p) => p.status === status).length;
-  const waiting = all.filter((p) => p.status === 'IN_REVIEW');
-  const drafts = all.filter((p) => p.status === 'DRAFT');
   const firstName = me.displayName.split(' ')[0] ?? me.displayName;
-  const loading = products.isPending || tests.isPending;
-  const openProduct = (p: Product) => void navigate({ to: '/products/$productId', params: { productId: p.id } });
+  const loading = products.isPending || tests.isPending || specs.isPending || protocols.isPending;
+
+  // work lists across products, specifications and protocols, limited to what this user may act on
+  const items = (status: 'DRAFT' | 'IN_REVIEW', kind: 'manage' | 'approve'): WorkItem[] => [
+    ...(can(`product.${kind}`) ? all : [])
+      .filter((p) => p.status === status)
+      .map((p) => ({
+        key: `p-${p.id}`,
+        icon: <IconProduct size={16} />,
+        title: `${p.code} · ${p.name}`,
+        detail: `Product · ${p.updatedAt ? `last changed ${formatInstant(p.updatedAt)}` : `created ${formatInstant(p.createdAt)}`}`,
+        status: p.status,
+        open: () => void navigate({ to: '/products/$productId', params: { productId: p.id } }),
+      })),
+    ...(can(`spec.${kind}`) ? (specs.data ?? []) : [])
+      .filter((sp) => sp.openStatus === status && sp.openVersionId)
+      .map((sp) => ({
+        key: `s-${sp.id}`,
+        icon: <IconSpec size={16} />,
+        title: `${sp.specNumber} v${sp.openVersionNo} · ${sp.title}`,
+        detail: `Specification · ${sp.productCode}`,
+        status,
+        open: () =>
+          void navigate({ to: '/specifications/$specId', params: { specId: sp.id }, search: { v: sp.openVersionId! } }),
+      })),
+    ...(can(`protocol.${kind}`) ? (protocols.data ?? []) : [])
+      .filter((pr) => pr.openStatus === status && pr.openVersionId)
+      .map((pr) => ({
+        key: `r-${pr.id}`,
+        icon: <IconCalendar size={16} />,
+        title: `${pr.protocolNumber} v${pr.openVersionNo} · ${pr.name}`,
+        detail: `Protocol · ${pr.productCode}`,
+        status,
+        open: () => void navigate({ to: '/protocols/$protocolId', params: { protocolId: pr.id }, search: { v: pr.openVersionId! } }),
+      })),
+  ];
+  const waiting = items('IN_REVIEW', 'approve');
+  const drafts = items('DRAFT', 'manage');
+  const canApproveAny = can('product.approve') || can('spec.approve') || can('protocol.approve');
+  const canManageAny = can('product.manage') || can('spec.manage') || can('protocol.manage');
+  const inReviewTotal =
+    count('IN_REVIEW') +
+    (specs.data ?? []).filter((x) => x.openStatus === 'IN_REVIEW').length +
+    (protocols.data ?? []).filter((x) => x.openStatus === 'IN_REVIEW').length;
+  const draftTotal =
+    count('DRAFT') +
+    (specs.data ?? []).filter((x) => x.openStatus === 'DRAFT').length +
+    (protocols.data ?? []).filter((x) => x.openStatus === 'DRAFT').length;
 
   return (
     <Stack gap="lg">
@@ -51,9 +116,9 @@ export function HomePage() {
 
       {canView && (
         <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>
-          <StatCard label="Waiting for approval" value={count('IN_REVIEW')} icon={<IconReview size={22} />} color="yellow"
+          <StatCard label="Waiting for approval" value={inReviewTotal} icon={<IconReview size={22} />} color="yellow"
                     loading={loading} onClick={() => void navigate({ to: '/products' })} />
-          <StatCard label="Drafts" value={count('DRAFT')} icon={<IconDraft size={22} />} color="gray" loading={loading}
+          <StatCard label="Drafts" value={draftTotal} icon={<IconDraft size={22} />} color="gray" loading={loading}
                     onClick={() => void navigate({ to: '/products' })} />
           <StatCard label="Approved products" value={count('APPROVED')} icon={<IconApproved size={22} />} color="teal"
                     loading={loading} onClick={() => void navigate({ to: '/products' })} />
@@ -63,37 +128,21 @@ export function HomePage() {
       )}
 
       <SimpleGrid cols={{ base: 1, md: 2 }}>
-        {can('product.approve') && (
+        {canApproveAny && (
           <Card withBorder radius="md" className="arq-fade-in">
             <CardTitle icon={<IconReview />} color="yellow" title="Waiting for your approval" />
-            {loading ? (
-              <Skeleton h={80} />
-            ) : waiting.length === 0 ? (
-              <EmptyState icon={<IconCheck />} title="All caught up" hint="No product is waiting for approval." />
-            ) : (
-              <Stack gap={4}>
-                {waiting.slice(0, 6).map((p) => (
-                  <ProductRow key={p.id} product={p} onOpen={openProduct} />
-                ))}
-              </Stack>
-            )}
+            <WorkList loading={loading} items={waiting} empty={
+              <EmptyState icon={<IconCheck />} title="All caught up" hint="Nothing is waiting for your approval." />
+            } />
           </Card>
         )}
 
-        {can('product.manage') && (
+        {canManageAny && (
           <Card withBorder radius="md" className="arq-fade-in">
             <CardTitle icon={<IconDraft />} color="gray" title="Drafts to finish" />
-            {loading ? (
-              <Skeleton h={80} />
-            ) : drafts.length === 0 ? (
-              <EmptyState icon={<IconProduct />} title="No drafts" hint="Create a product, then submit it for approval." />
-            ) : (
-              <Stack gap={4}>
-                {drafts.slice(0, 6).map((p) => (
-                  <ProductRow key={p.id} product={p} onOpen={openProduct} />
-                ))}
-              </Stack>
-            )}
+            <WorkList loading={loading} items={drafts} empty={
+              <EmptyState icon={<IconProduct />} title="No drafts" hint="Create a product, specification or protocol, then submit it for approval." />
+            } />
           </Card>
         )}
 
@@ -159,20 +208,40 @@ function CardTitle({ icon, color, title }: { icon: ReactNode; color: string; tit
   );
 }
 
-function ProductRow({ product: p, onOpen }: { product: Product; onOpen: (p: Product) => void }) {
+function WorkList({ loading, items, empty }: { loading: boolean; items: WorkItem[]; empty: ReactNode }) {
+  if (loading) {
+    return <Skeleton h={80} />;
+  }
+  if (items.length === 0) {
+    return <>{empty}</>;
+  }
   return (
-    <UnstyledButton onClick={() => onOpen(p)} className="arq-card-link" p={6} style={{ borderRadius: 8 }}>
-      <Group justify="space-between" wrap="nowrap">
-        <div>
-          <Text size="sm" fw={500}>
-            {p.code} · {p.name}
-          </Text>
-          <Text size="xs" c="dimmed">
-            {p.updatedAt ? `Last changed ${formatInstant(p.updatedAt)}` : `Created ${formatInstant(p.createdAt)}`}
-          </Text>
-        </div>
-        <StatusBadge status={p.status} />
-      </Group>
-    </UnstyledButton>
+    <Stack gap={4}>
+      {items.slice(0, 8).map((item) => (
+        <UnstyledButton key={item.key} onClick={item.open} className="arq-card-link" p={6} style={{ borderRadius: 8 }}>
+          <Group justify="space-between" wrap="nowrap">
+            <Group gap="xs" wrap="nowrap">
+              <ThemeIcon size={26} radius="md" variant="light" color="gray">
+                {item.icon}
+              </ThemeIcon>
+              <div>
+                <Text size="sm" fw={500} lineClamp={1}>
+                  {item.title}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {item.detail}
+                </Text>
+              </div>
+            </Group>
+            <StatusBadge status={item.status} />
+          </Group>
+        </UnstyledButton>
+      ))}
+      {items.length > 8 && (
+        <Text size="xs" c="dimmed" ta="center">
+          and {items.length - 8} more
+        </Text>
+      )}
+    </Stack>
   );
 }

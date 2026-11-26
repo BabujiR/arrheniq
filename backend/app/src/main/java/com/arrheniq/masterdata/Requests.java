@@ -2,6 +2,9 @@ package com.arrheniq.masterdata;
 
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+import java.util.UUID;
+
 /** Request bodies of the master-data API. {@code expectedVersion} is the version the user saw (optimistic locking). */
 public final class Requests {
 
@@ -15,6 +18,23 @@ public final class Requests {
 
     public record DictionaryValueUpdate(@Nullable Long expectedVersion, @Nullable String reason,
                                         @Nullable DictionaryValueInput data) { }
+
+    public record SpecificationCreate(@Nullable UUID productId, @Nullable String specNumber, @Nullable String title) { }
+
+    /** Content of a specification draft: the full, ordered list of tests (replaces the previous list). */
+    public record SpecContent(@Nullable String changeSummary, @Nullable List<SpecTestInput> tests) { }
+
+    public record SpecVersionUpdate(@Nullable Long expectedVersion, @Nullable String reason,
+                                    @Nullable SpecContent data) { }
+
+    /**
+     * A new protocol: version 1 starts from an ICH template (time points, study type, condition) and/or the tests of
+     * a specification version of the same product; both optional.
+     */
+    public record ProtocolCreate(@Nullable UUID productId, @Nullable String protocolNumber, @Nullable String name,
+                                 @Nullable String templateCode, @Nullable UUID specVersionId) { }
+
+    public record ProtocolVersionUpdate(@Nullable Long expectedVersion, @Nullable ProtocolInput data) { }
 
     /** Submit / reject / retire: reason required for reject and retire (ReasonPolicy). */
     public record StatusChange(@Nullable Long expectedVersion, @Nullable String reason) { }

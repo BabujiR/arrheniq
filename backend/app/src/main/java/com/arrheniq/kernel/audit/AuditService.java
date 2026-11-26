@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.audit;
 
+import com.arrheniq.kernel.security.RequirePermission;
 import com.arrheniq.kernel.tenancy.TenantContext;
 import com.arrheniq.kernel.tenancy.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,6 +115,32 @@ public class AuditService {
                   FROM audit.audit_event WHERE seq >= ? ORDER BY seq LIMIT ?
                 """)
             .params(fromSeq, limit)
+            .query(AuditService::mapEvent)
+            .list();
+    }
+
+    /**
+     * The audit trail of some records (e.g. a protocol and one of its versions), oldest first, for the record history
+     * views (URS-AUD-006). Only events at sites the user can see, or without a site, are returned.
+     */
+    @RequirePermission("audit.view")
+    @Transactional(readOnly = true)
+    public List<AuditEvent> recordHistory(List<UUID> recordIds, int limit) {
+        if (recordIds.isEmpty()) {
+            return List.of();
+        }
+        TenantContext ctx = TenantContextHolder.require();
+        return jdbc.sql("""
+                SELECT tenant_id, seq, id, occurred_at, site_id, actor_user_id, actor_name, actor_type, action,
+                       record_type, record_id, record_version, business_key, changes::text AS changes, reason,
+                       reason_code, correlation_id, legacy, prev_hash, hash
+                  FROM audit.audit_event
+                 WHERE record_id = ANY (CAST(? AS uuid[]))
+                   AND (site_id IS NULL OR ? OR site_id = ANY (CAST(? AS uuid[])))
+                 ORDER BY seq LIMIT ?
+                """)
+            .params(recordIds.stream().map(UUID::toString).distinct().toArray(String[]::new), ctx.allSites(),
+                    ctx.siteIds().stream().map(UUID::toString).toArray(String[]::new), Math.clamp(limit, 1, 1000))
             .query(AuditService::mapEvent)
             .list();
     }

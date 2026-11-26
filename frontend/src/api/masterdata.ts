@@ -6,7 +6,15 @@ import type {
   Product,
   ProductDetails,
   ProductInput,
+  ProtocolContent,
+  ProtocolDetails,
+  ProtocolSummary,
   ProtocolTemplate,
+  ProtocolVersionDetails,
+  SpecificationDetails,
+  SpecificationSummary,
+  SpecTestInput,
+  SpecVersionDetails,
   TestMethod,
   TestMethodInput,
 } from './types';
@@ -22,6 +30,15 @@ export const keys = {
   dictionaries: ['dictionaries'] as const,
   dictionaryValues: (code: string) => ['dictionary-values', code] as const,
   protocolTemplates: ['protocol-templates'] as const,
+  specifications: (filter: { q?: string; productId?: string }) => ['specifications', filter] as const,
+  specificationsAll: ['specifications'] as const,
+  specification: (id: string) => ['specification', id] as const,
+  specVersion: (id: string) => ['spec-version', id] as const,
+  protocols: (filter: { q?: string; productId?: string }) => ['protocols', filter] as const,
+  protocolsAll: ['protocols'] as const,
+  protocol: (id: string) => ['protocol', id] as const,
+  protocolVersion: (id: string) => ['protocol-version', id] as const,
+  dictionaryValuesActive: (code: string) => ['dictionary-values', code, 'ACTIVE'] as const,
 };
 
 function query(params: Record<string, string | undefined>): string {
@@ -79,4 +96,68 @@ export const dictionariesApi = {
 
 export const protocolTemplatesApi = {
   list: () => api<ProtocolTemplate[]>('GET', '/api/v1/protocol-templates'),
+};
+
+export const specificationsApi = {
+  list: (filter: { q?: string; productId?: string }) =>
+    api<SpecificationSummary[]>('GET', `/api/v1/specifications${query({ ...filter, limit: '200' })}`),
+  get: (id: string) => api<SpecificationDetails>('GET', `/api/v1/specifications/${id}`),
+  create: (productId: string, specNumber: string, title: string) =>
+    api<SpecificationDetails>('POST', '/api/v1/specifications', { productId, specNumber, title }),
+  newVersion: (id: string) => api<SpecVersionDetails>('POST', `/api/v1/specifications/${id}/versions`),
+  version: (id: string) => api<SpecVersionDetails>('GET', `/api/v1/spec-versions/${id}`),
+  save: (id: string, expectedVersion: number, changeSummary: string | null, tests: SpecTestInput[]) =>
+    api<SpecVersionDetails>('PUT', `/api/v1/spec-versions/${id}`, { expectedVersion, data: { changeSummary, tests } }),
+  submit: (id: string, expectedVersion: number) =>
+    api<SpecVersionDetails>('POST', `/api/v1/spec-versions/${id}/submit`, { expectedVersion }),
+  approve: (id: string, expectedVersion: number, comment?: string) =>
+    api<SpecVersionDetails>('POST', `/api/v1/spec-versions/${id}/approve`, { expectedVersion, comment }),
+  reject: (id: string, expectedVersion: number, reason: string) =>
+    api<SpecVersionDetails>('POST', `/api/v1/spec-versions/${id}/reject`, { expectedVersion, reason }),
+  retire: (id: string, expectedVersion: number, reason: string) =>
+    api<SpecVersionDetails>('POST', `/api/v1/spec-versions/${id}/retire`, { expectedVersion, reason }),
+  discard: (id: string, expectedVersion: number, reason: string) =>
+    api<void>('POST', `/api/v1/spec-versions/${id}/discard`, { expectedVersion, reason }),
+};
+
+export interface ProtocolCreateInput {
+  productId: string;
+  protocolNumber: string;
+  name: string;
+  templateCode?: string | null;
+  specVersionId?: string | null;
+}
+
+/** Draft content as saved; the server sorts time points chronologically and remaps the grid. */
+export function toProtocolInput(c: ProtocolContent) {
+  return {
+    studyType: c.studyType,
+    conditionCode: c.conditionCode,
+    reserveUnits: c.reserveUnits,
+    fillUnitCode: c.fillUnitCode,
+    changeSummary: c.changeSummary,
+    timepoints: c.timepoints.map((t) => ({ value: t.value, unit: t.unit, label: t.label, unitsPlanned: t.unitsPlanned })),
+    tests: c.tests.map((t) => ({ testMethodId: t.testMethodId, at: t.at })),
+  };
+}
+
+export const protocolsApi = {
+  list: (filter: { q?: string; productId?: string }) =>
+    api<ProtocolSummary[]>('GET', `/api/v1/protocols${query({ ...filter, limit: '200' })}`),
+  get: (id: string) => api<ProtocolDetails>('GET', `/api/v1/protocols/${id}`),
+  create: (input: ProtocolCreateInput) => api<ProtocolDetails>('POST', '/api/v1/protocols', input),
+  newVersion: (id: string) => api<ProtocolVersionDetails>('POST', `/api/v1/protocols/${id}/versions`),
+  version: (id: string) => api<ProtocolVersionDetails>('GET', `/api/v1/protocol-versions/${id}`),
+  save: (id: string, expectedVersion: number, content: ProtocolContent) =>
+    api<ProtocolVersionDetails>('PUT', `/api/v1/protocol-versions/${id}`, { expectedVersion, data: toProtocolInput(content) }),
+  submit: (id: string, expectedVersion: number) =>
+    api<ProtocolVersionDetails>('POST', `/api/v1/protocol-versions/${id}/submit`, { expectedVersion }),
+  approve: (id: string, expectedVersion: number, comment?: string) =>
+    api<ProtocolVersionDetails>('POST', `/api/v1/protocol-versions/${id}/approve`, { expectedVersion, comment }),
+  reject: (id: string, expectedVersion: number, reason: string) =>
+    api<ProtocolVersionDetails>('POST', `/api/v1/protocol-versions/${id}/reject`, { expectedVersion, reason }),
+  retire: (id: string, expectedVersion: number, reason: string) =>
+    api<ProtocolVersionDetails>('POST', `/api/v1/protocol-versions/${id}/retire`, { expectedVersion, reason }),
+  discard: (id: string, expectedVersion: number, reason: string) =>
+    api<void>('POST', `/api/v1/protocol-versions/${id}/discard`, { expectedVersion, reason }),
 };

@@ -80,6 +80,17 @@ export const IconTest = (p: P) => (
   </Svg>
 );
 
+/** Specification: a document with a check list. */
+export const IconSpec = (p: P) => (
+  <Svg name="spec" {...p}>
+    <path className="d" d="M6 3.5h9l3.5 3.5v13.5H6z" />
+    <path d="M15 3.5H6.5a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V7z" />
+    <path d="M15 3.5V7h3.5" />
+    <path className="ticks" d="m8.5 11 1.2 1.2 2-2.2M8.5 16l1.2 1.2 2-2.2" />
+    <path d="M13.5 11.5h2.5M13.5 16.5h2.5" />
+  </Svg>
+);
+
 /** Controlled lists: a list with bullets. */
 export const IconList = (p: P) => (
   <Svg name="list" {...p}>
