@@ -2,8 +2,12 @@
 export function formatInstant(iso: string, timeZone?: string): string {
   const date = new Date(iso);
   const local = new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
+    // explicit fields: dateStyle/timeStyle can't be combined with timeZoneName (Chrome throws "Invalid option")
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
     timeZone,
     timeZoneName: 'short',
   }).format(date);

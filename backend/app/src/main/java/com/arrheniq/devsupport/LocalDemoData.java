@@ -100,13 +100,13 @@ class LocalDemoData implements ApplicationRunner {
 
     private void tenantA(UUID site) {
         Map<String, UUID> lib = new HashMap<>();
-        lib.put("ASSAY", numeric("ASSAY", "Assay (HPLC)", "TM-001 rev 4", "PCT_LC", 2, 1, "95", "105", "97", "103"));
-        lib.put("IMP-B", numeric("IMP-B", "Impurity B (HPLC)", "TM-002 rev 2", "PCT", 1, 2, null, "0.2", null, "0.15"));
-        lib.put("IMP-TOT", numeric("IMP-TOT", "Total impurities (HPLC)", "TM-002 rev 2", "PCT", 1, 2, null, "1.0", null,
+        lib.put("ASSAY", numeric("ASSAY", "Assay (HPLC)", "TM-001 rev 4", "%LC", 2, 1, "95", "105", "97", "103"));
+        lib.put("IMP-B", numeric("IMP-B", "Impurity B (HPLC)", "TM-002 rev 2", "%", 1, 2, null, "0.2", null, "0.15"));
+        lib.put("IMP-TOT", numeric("IMP-TOT", "Total impurities (HPLC)", "TM-002 rev 2", "%", 1, 2, null, "1.0", null,
                 "0.8"));
-        lib.put("DISS", numeric("DISS", "Dissolution, Q at 30 min", "TM-003 rev 1", "PCT", 6, 0, "80", null, "85", null));
-        lib.put("KF", numeric("KF", "Water content (Karl Fischer)", "TM-004 rev 1", "PCT", 1, 1, null, "3.0", null, "2.5"));
-        lib.put("PH", numeric("PH", "pH", "TM-005 rev 1", "PH", 1, 1, "3.0", "4.5", null, null));
+        lib.put("DISS", numeric("DISS", "Dissolution, Q at 30 min", "TM-003 rev 1", "%", 6, 0, "80", null, "85", null));
+        lib.put("KF", numeric("KF", "Water content (Karl Fischer)", "TM-004 rev 1", "%", 1, 1, null, "3.0", null, "2.5"));
+        lib.put("PH", numeric("PH", "pH", "TM-005 rev 1", null, 1, 1, "3.0", "4.5", null, null));
         lib.put("APPEAR", text("APPEAR", "Appearance (visual)", "TM-010 rev 1", "Conforms to description"));
 
         // MET-500: the walkthrough product. Submitted, so QA approves it first.
@@ -170,14 +170,14 @@ class LocalDemoData implements ApplicationRunner {
     // ------------------------------------------------------------------ tenant B (shows tenant isolation)
 
     private void tenantB(UUID site) {
-        numeric("ASSAY", "Assay (UPLC)", "B-SOP-17", "PCT_LC", 2, 1, "90", "110", null, null);
+        numeric("ASSAY", "Assay (UPLC)", "B-SOP-17", "%LC", 2, 1, "90", "110", null, null);
         products.create(new ProductInput(site, "CIP-250", "Ciprofloxacin 250 mg tablets", null, "DRUG_PRODUCT",
                 "FC_TABLET", "250 mg", "ESTABLISHED", 36, "MONTH", false));
     }
 
     // ------------------------------------------------------------------ helpers
 
-    private UUID numeric(String code, String name, String ref, String unit, int replicates, int decimals,
+    private UUID numeric(String code, String name, String ref, @Nullable String unit, int replicates, int decimals,
                          @Nullable String lower, @Nullable String upper, @Nullable String alertLower,
                          @Nullable String alertUpper) {
         return tests.create(new TestMethodInput(code, name, ref, null, "NUMERIC", unit, replicates, decimals,

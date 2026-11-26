@@ -22,12 +22,14 @@ const assay: SpecTest = {
 
 describe('limitText', () => {
   it('writes two-sided, one-sided, text and report-only criteria', () => {
-    expect(limitText(assay)).toBe('90 – 110 %LC');
-    expect(limitText({ ...assay, upperLimit: null, unitCode: '%' })).toBe('NLT 90 %');
+    expect(limitText(assay)).toBe('90.0 – 110.0 %LC');
+    expect(limitText({ ...assay, upperLimit: null, unitCode: '%' })).toBe('NLT 90.0 %');
     expect(limitText({ ...assay, lowerLimit: null, upperLimit: 0.5, unitCode: '%' })).toBe('NMT 0.5 %');
     expect(limitText({ ...assay, lowerLimit: null, upperLimit: null })).toBe('Report');
     expect(limitText({ ...assay, resultsFormat: 'TEXT', textLimit: 'Conforms' })).toBe('Conforms');
-    expect(alertText(assay)).toBe('≥ 92');
+    expect(alertText(assay)).toBe('≥ 92.0');
+    expect(limitText({ ...assay, decimals: 2, lowerLimit: null, upperLimit: 0.2 })).toBe('NMT 0.20 %LC');
+    expect(limitText({ ...assay, decimals: null })).toBe('90 – 110 %LC');
   });
 });
 

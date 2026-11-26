@@ -8,6 +8,7 @@ import { ProtocolsPage } from './pages/ProtocolsPage';
 import { SpecificationDetailPage } from './pages/SpecificationDetailPage';
 import { SpecificationsPage } from './pages/SpecificationsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { str } from './searchParams';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { SignedOutPage } from './pages/SignedOutPage';
@@ -64,7 +65,6 @@ const testMethodsRoute = createRoute({
 
 const listsRoute = createRoute({ getParentRoute: () => appRoute, path: '/lists', component: ListsPage });
 
-const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
 /** `?new=1&productId=…` opens the create dialog for a product (from the product page). */
 const specificationsRoute = createRoute({
   getParentRoute: () => appRoute,

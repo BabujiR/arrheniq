@@ -1,6 +1,12 @@
 import type { SpecTest } from '../api/types';
 
-type Limits = Pick<SpecTest, 'resultsFormat' | 'lowerLimit' | 'upperLimit' | 'textLimit' | 'unitCode'>;
+type Limits = Pick<SpecTest, 'resultsFormat' | 'lowerLimit' | 'upperLimit' | 'textLimit' | 'unitCode'> &
+  Partial<Pick<SpecTest, 'decimals'>>;
+
+/** A limit shown with the test's reporting decimals when they are known: 95 with 1 decimal → "95.0". */
+function fmt(value: number, decimals: number | null | undefined): string {
+  return decimals != null && decimals >= 0 && decimals <= 6 ? value.toFixed(decimals) : String(value);
+}
 
 /**
  * Acceptance criterion as written on a specification (URS-MD-003):
@@ -11,8 +17,8 @@ export function limitText(t: Limits): string {
     return t.textLimit?.trim() || 'Report';
   }
   const unit = t.unitCode ? ` ${t.unitCode}` : '';
-  const lo = t.lowerLimit;
-  const hi = t.upperLimit;
+  const lo = t.lowerLimit == null ? null : fmt(t.lowerLimit, t.decimals);
+  const hi = t.upperLimit == null ? null : fmt(t.upperLimit, t.decimals);
   if (lo != null && hi != null) {
     return `${lo} – ${hi}${unit}`;
   }
@@ -25,15 +31,17 @@ export function limitText(t: Limits): string {
   return 'Report';
 }
 
-export function alertText(t: Pick<SpecTest, 'alertLower' | 'alertUpper'>): string {
-  if (t.alertLower != null && t.alertUpper != null) {
-    return `${t.alertLower} – ${t.alertUpper}`;
+export function alertText(t: Pick<SpecTest, 'alertLower' | 'alertUpper'> & Partial<Pick<SpecTest, 'decimals'>>): string {
+  const lo = t.alertLower == null ? null : fmt(t.alertLower, t.decimals);
+  const hi = t.alertUpper == null ? null : fmt(t.alertUpper, t.decimals);
+  if (lo != null && hi != null) {
+    return `${lo} – ${hi}`;
   }
-  if (t.alertLower != null) {
-    return `≥ ${t.alertLower}`;
+  if (lo != null) {
+    return `≥ ${lo}`;
   }
-  if (t.alertUpper != null) {
-    return `≤ ${t.alertUpper}`;
+  if (hi != null) {
+    return `≤ ${hi}`;
   }
   return '';
 }
