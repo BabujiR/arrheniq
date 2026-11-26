@@ -5,11 +5,13 @@ Implements the release flow in `docs/architecture/deployment-architecture.md` §
 ## 1. What runs today
 | Stage | Workflow | Trigger | What it does | Covers |
 |---|---|---|---|---|
-| **C1** Backend build | `.github/workflows/ci-backend.yml` | PR / push to `main` touching `backend/**` | JDK 25 (Temurin), `mvn -B verify`: compile with `-Werror`, unit tests (ModularityTests, TenantContextTest, migrator parser tests), integration test `ApplicationIT` (Spring Boot + PostgreSQL 16 via Testcontainers); uploads Surefire/Failsafe reports (90 days) | Phase 4 backend skeleton + migrator; ADR 0001, 0017 |
+| **C1** Backend build | `.github/workflows/ci-backend.yml` | PR / push to `main` touching `backend/**`, `docs/validation/**` | JDK 25 (Temurin), `mvn -B verify`: compile with `-Werror`, unit tests (ModularityTests, TenantContextTest, migrator parser tests), integration test `ApplicationIT` (Spring Boot + PostgreSQL 16 via Testcontainers); uploads Surefire/Failsafe reports (90 days) | Phase 4 backend skeleton + migrator; ADR 0001, 0017 |
 | **C2** Database | `.github/workflows/ci-database.yml` | PR / push touching `db/**` or the script | PostgreSQL 16 service → `scripts/ci/db-tests.sh`: bootstrap roles, apply V1–V12 with psql, schema linter (10 checks), security behaviour tests T01–T21 | Phase 4 schema; URS-TEN-001, URS-AUD-001/003/005, URS-SEC-001; ADR 0003, 0004 |
 | **C3** Security | `.github/workflows/security.yml` | Every PR, push to `main`, weekly | gitleaks secret scan over full history; dependency review on PRs (fail on High); CodeQL `security-extended` for Java | security-architecture.md §6 (T15, T17); URS-SEC-005 |
 | **C4** Docs | `.github/workflows/docs.yml` | PR / push touching docs or READMEs | Relative-link check for tracked docs (architecture, ADRs, data, backend) | Phase 3 architecture + ADRs |
-| — | `.github/dependabot.yml` | Weekly | Maven + GitHub Actions update PRs (Spring and test libraries grouped) | security-architecture.md §6 |
+| **C7** Traceability (first part) | `ci-backend.yml`, after the tests | Same as C1 | `scripts/ci/traceability.py`: `@Requirement` + JUnit results → traceability matrix in the job summary and as artifact `traceability-<run>` (HTML); fails on unknown requirement IDs or failing linked tests | URS-VAL-001; ADR 0015 |
+| — | `security.yml` job `bom-pins` | Every PR, push, weekly | `scripts/ci/check_bom_pins.py`: are the Spring Boot BOM security overrides still needed? newer fix released? | Dependency security overrides (below) |
+| — | `.github/dependabot.yml` | Weekly | Maven, npm (`frontend/`, grouped, no majors), Docker Compose images (`infra/compose`) and GitHub Actions update PRs | security-architecture.md §6 |
 | — | `.github/pull_request_template.md` | Every PR | URS IDs, ADRs, GxP and security checklist | ADR 0015 |
 
 Phases 1 and 2 (discovery, product) are local-only working documents (git-ignored), so they have no CI.
@@ -80,6 +82,8 @@ Commit `frontend/pnpm-lock.yaml` so the install is reproducible.
 
 Versions we pin above what the Spring Boot BOM manages, because a CVE fix was released before Spring Boot picked it up.
 Review at every Spring Boot upgrade: when the BOM manages the fixed version (or newer), **delete the override**.
+The `bom-pins` job in `security.yml` checks this weekly; each pin must keep its `<!-- SECURITY OVERRIDE ... -->`
+comment directly above it (that is how the script finds it).
 Check with `.\mvnw.cmd -pl app dependency:tree "-Dincludes=<groupId>"`.
 
 | Pin (in `backend/pom.xml` unless noted) | Boot 4.2.0 gives | CVEs | Scope | Added | Remove when |

@@ -5,6 +5,7 @@ import com.arrheniq.kernel.audit.AuditActor;
 import com.arrheniq.kernel.audit.AuditEventDraft;
 import com.arrheniq.kernel.audit.AuditService;
 import com.arrheniq.kernel.audit.FieldChange;
+import com.arrheniq.kernel.security.SystemOperation;
 import com.arrheniq.kernel.security.UserDirectory;
 import com.arrheniq.kernel.tenancy.TenantContextHolder;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -51,7 +53,12 @@ public class UserInvitationService {
         this.audit = audit;
     }
 
-    /** Creates the invited user; returns its id. Requires a tenant transaction with an open audit context. */
+    /**
+     * Creates the invited user; returns its id. Requires a tenant transaction with an open audit context.
+     * Runs as the system today (provisioning, local seed data); the user-administration API will call it
+     * through a permission-checked method ({@code user.manage}).
+     */
+    @SystemOperation
     @Transactional(propagation = Propagation.MANDATORY)
     public UUID invite(AuditActor actor, Invitation inv) {
         TenantContextHolder.require();
@@ -79,8 +86,9 @@ public class UserInvitationService {
                                           display_name, status)
                 VALUES (app.current_tenant(), ?, ?, ?, ?, ?, ?, ?, 'INVITED')
                 """)
-            .params(userId, actorId, UserDirectory.INVITATION_ISSUER, userId.toString(), username, email,
-                    inv.displayName().trim())
+            // as a list: created_by is NULL when the system invites (JdbcClient's varargs are declared non-null)
+            .params(Arrays.asList(userId, actorId, UserDirectory.INVITATION_ISSUER, userId.toString(), username,
+                    email, inv.displayName().trim()))
             .update();
         audit.record(actor, new AuditEventDraft("CREATE", "USER", userId, 0L, username, null,
                 List.of(new FieldChange("username", null, username), new FieldChange("email", null, email),
@@ -109,7 +117,8 @@ public class UserInvitationService {
                 INSERT INTO app.user_site_role (tenant_id, id, created_by, user_id, role_id, site_id)
                 VALUES (app.current_tenant(), ?, ?, ?, ?, ?)
                 """)
-            .params(assignmentId, actor.userId(), userId, roleId, siteId)
+            // as a list: created_by is NULL for the system, site_id is NULL for "all sites"
+            .params(Arrays.asList(assignmentId, actor.userId(), userId, roleId, siteId))
             .update();
         List<FieldChange> changes = new ArrayList<>();
         changes.add(new FieldChange("user", null, username));

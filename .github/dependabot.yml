@@ -1,4 +1,7 @@
 # Weekly dependency updates (security-architecture.md §6: dependencies updated weekly).
+# Not covered by Dependabot: the Spring Boot BOM security overrides in backend/pom.xml (properties, not dependency
+# versions) → checked weekly by scripts/ci/check_bom_pins.py in security.yml; and container images referenced from
+# Java tests (KeycloakLoginIT, PostgresIntegrationTest) → keep them on the same version as infra/compose.
 version: 2
 updates:
   - package-ecosystem: maven
@@ -12,6 +15,45 @@ updates:
         patterns: ["org.springframework*"]
       test:
         patterns: ["org.junit*", "org.testcontainers*", "org.assertj*", "org.mockito*"]
+
+  # frontend (pnpm lockfile)
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    groups:
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      mantine:
+        patterns: ["@mantine/*"]
+      tanstack:
+        patterns: ["@tanstack/*"]
+      ag-grid:
+        patterns: ["ag-grid-*"]
+      fonts:
+        patterns: ["@fontsource*"]
+      build-and-test:
+        patterns: ["vite", "vitest", "typescript", "@vitejs/*"]
+    ignore:
+      # majors are planned upgrades (ADR review), not weekly chores
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # local development stack (PostgreSQL, Keycloak, Mailpit images)
+  - package-ecosystem: docker-compose
+    directory: "/infra/compose"
+    schedule:
+      interval: weekly
+      day: monday
+    ignore:
+      # stay on the PostgreSQL major the product supports (16) and the Keycloak major the tests use
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "quay.io/keycloak/keycloak"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"

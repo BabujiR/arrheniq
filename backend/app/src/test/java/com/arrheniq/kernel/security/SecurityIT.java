@@ -40,8 +40,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 /**
  * Browser security end to end with MockMvc and real PostgreSQL: deny by default, login redirects,
  * per-request permission loading, idle lock, absolute expiry, revocation, re-authentication request,
- * CSRF on logout, and the audit events these produce. The IdP round trip itself is covered by the
- * local Keycloak walkthrough (docs/delivery/s0.md) until the Keycloak container test lands (S0.7).
+ * CSRF on logout, and the audit events these produce. The real IdP round trip is {@link KeycloakLoginIT}.
  */
 @Requirement({"URS-SEC-001", "URS-IAM-004", "URS-IAM-005", "URS-ESG-002", "URS-AUD-001"})
 class SecurityIT extends PostgresIntegrationTest {

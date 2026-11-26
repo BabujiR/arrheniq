@@ -37,6 +37,7 @@
   ],
   "users": [
     {
+      "id": "0d000000-0000-4000-8000-000000000001",
       "username": "tadmin",
       "email": "tadmin@tenant-a.local",
       "firstName": "Tara",
@@ -46,6 +47,7 @@
       "credentials": [{ "type": "password", "value": "dev-password", "temporary": false }]
     },
     {
+      "id": "0d000000-0000-4000-8000-000000000002",
       "username": "smanager",
       "email": "smanager@tenant-a.local",
       "firstName": "Sam",
@@ -55,6 +57,7 @@
       "credentials": [{ "type": "password", "value": "dev-password", "temporary": false }]
     },
     {
+      "id": "0d000000-0000-4000-8000-000000000003",
       "username": "qapprover",
       "email": "qapprover@tenant-a.local",
       "firstName": "Quinn",
@@ -64,6 +67,7 @@
       "credentials": [{ "type": "password", "value": "dev-password", "temporary": false }]
     },
     {
+      "id": "0d000000-0000-4000-8000-000000000004",
       "username": "bmanager",
       "email": "bmanager@tenant-b.local",
       "firstName": "Blake",
