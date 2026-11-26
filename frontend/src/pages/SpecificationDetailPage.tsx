@@ -31,6 +31,7 @@ import { IconArchive, IconEdit, IconPlus, IconReject, IconSend, IconSignature, I
 import { notifyError, notifySuccess } from '../components/notify';
 import { ReasonModal } from '../components/ReasonModal';
 import { StatusBadge } from '../components/StatusBadge';
+import { RecordHistory } from '../audit/RecordHistory';
 import { toFormErrors } from '../components/formErrors';
 import { rememberPendingSignature, takePendingSignature } from '../signing/pendingSignature';
 import { compareVersions } from '../spec/limits';
@@ -458,6 +459,7 @@ export function SpecificationDetailPage() {
                   </Stack>
                 )}
               </Card>
+              {can('audit.view') && <RecordHistory recordIds={[spec.id, v.id]} revision={v.version} timeZone={site?.timeZone} />}
             </Stack>
           )}
         </Grid.Col>

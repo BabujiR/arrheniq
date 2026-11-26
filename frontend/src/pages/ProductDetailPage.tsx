@@ -12,6 +12,7 @@ import { notifyError, notifySuccess } from '../components/notify';
 import { ReasonModal } from '../components/ReasonModal';
 import { IconArchive, IconCalendar, IconEdit, IconPlus, IconProduct, IconReject, IconSend, IconSignature, IconSpec } from '../components/icons';
 import { StatusBadge } from '../components/StatusBadge';
+import { RecordHistory } from '../audit/RecordHistory';
 import { WorkflowStepper } from '../components/WorkflowStepper';
 import { rememberPendingSignature, takePendingSignature } from '../signing/pendingSignature';
 import { ProductForm } from './ProductForm';
@@ -248,6 +249,8 @@ export function ProductDetailPage() {
           </Stack>
         )}
       </Card>
+
+      {can('audit.view') && <RecordHistory recordIds={[p.id]} revision={p.version} timeZone={site?.timeZone} />}
 
       <ProductForm opened={editing} existing={p} onClose={() => setEditing(false)} />
 

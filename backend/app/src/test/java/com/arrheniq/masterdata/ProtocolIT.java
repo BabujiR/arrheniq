@@ -51,7 +51,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
  * the live-row uniqueness of V14), approve by e-signature, supersede with a new version; validation, SoD, scope.
  */
 @Requirement({"URS-PRO-001", "URS-PRO-002", "URS-PRO-003", "URS-PRO-005", "URS-PRO-007", "URS-ESG-001",
-        "URS-ESG-002", "URS-AUD-002"})
+        "URS-ESG-002", "URS-AUD-002", "URS-AUD-006"})
 class ProtocolIT extends PostgresIntegrationTest {
 
     private static final Pattern ID = Pattern.compile("\"id\":\"([0-9a-f-]{36})\"");
@@ -163,6 +163,12 @@ class ProtocolIT extends PostgresIntegrationTest {
         String protocol = body(call(manager, get("/api/v1/protocols/" + protocolId)));
         assertTrue(protocol.contains("\"approvedVersionNo\":2") && protocol.contains("\"status\":\"SUPERSEDED\""),
                 protocol);
+
+        // record history (URS-AUD-006): the version's trail as the page shows it; nothing for another site
+        String history = body(call(manager, get("/api/v1/audit/history?recordId=" + protocolId + "&recordId=" + v1)));
+        assertTrue(history.contains("\"action\":\"SIGN\"") && history.contains("\"field\":\"grid.KF\"")
+                && history.contains("\"recordType\":\"PROTOCOL\"") && !history.contains("\"hash\""), history);
+        assertEquals("[]", body(call(managerS2, get("/api/v1/audit/history?recordId=" + v1))));
     }
 
     @Test

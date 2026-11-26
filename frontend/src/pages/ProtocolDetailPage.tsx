@@ -31,6 +31,7 @@ import { IconArchive, IconCalendar, IconEdit, IconPlus, IconReject, IconSend, Ic
 import { notifyError, notifySuccess } from '../components/notify';
 import { ReasonModal } from '../components/ReasonModal';
 import { StatusBadge } from '../components/StatusBadge';
+import { RecordHistory } from '../audit/RecordHistory';
 import { ProtocolEditor } from '../protocol/ProtocolEditor';
 import { rememberPendingSignature, takePendingSignature } from '../signing/pendingSignature';
 
@@ -397,6 +398,9 @@ export function ProtocolDetailPage() {
                   </Stack>
                 )}
               </Card>
+              {can('audit.view') && (
+                <RecordHistory recordIds={[protocol.id, v.id]} revision={v.version} timeZone={site?.timeZone} />
+              )}
             </Stack>
           )}
         </Grid.Col>
