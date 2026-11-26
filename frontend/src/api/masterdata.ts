@@ -7,6 +7,10 @@ import type {
   ProductDetails,
   ProductInput,
   ProtocolTemplate,
+  SpecificationDetails,
+  SpecificationSummary,
+  SpecTestInput,
+  SpecVersionDetails,
   TestMethod,
   TestMethodInput,
 } from './types';
@@ -22,6 +26,10 @@ export const keys = {
   dictionaries: ['dictionaries'] as const,
   dictionaryValues: (code: string) => ['dictionary-values', code] as const,
   protocolTemplates: ['protocol-templates'] as const,
+  specifications: (filter: { q?: string; productId?: string }) => ['specifications', filter] as const,
+  specificationsAll: ['specifications'] as const,
+  specification: (id: string) => ['specification', id] as const,
+  specVersion: (id: string) => ['spec-version', id] as const,
 };
 
 function query(params: Record<string, string | undefined>): string {
@@ -79,4 +87,26 @@ export const dictionariesApi = {
 
 export const protocolTemplatesApi = {
   list: () => api<ProtocolTemplate[]>('GET', '/api/v1/protocol-templates'),
+};
+
+export const specificationsApi = {
+  list: (filter: { q?: string; productId?: string }) =>
+    api<SpecificationSummary[]>('GET', `/api/v1/specifications${query({ ...filter, limit: '200' })}`),
+  get: (id: string) => api<SpecificationDetails>('GET', `/api/v1/specifications/${id}`),
+  create: (productId: string, specNumber: string, title: string) =>
+    api<SpecificationDetails>('POST', '/api/v1/specifications', { productId, specNumber, title }),
+  newVersion: (id: string) => api<SpecVersionDetails>('POST', `/api/v1/specifications/${id}/versions`),
+  version: (id: string) => api<SpecVersionDetails>('GET', `/api/v1/spec-versions/${id}`),
+  save: (id: string, expectedVersion: number, changeSummary: string | null, tests: SpecTestInput[]) =>
+    api<SpecVersionDetails>('PUT', `/api/v1/spec-versions/${id}`, { expectedVersion, data: { changeSummary, tests } }),
+  submit: (id: string, expectedVersion: number) =>
+    api<SpecVersionDetails>('POST', `/api/v1/spec-versions/${id}/submit`, { expectedVersion }),
+  approve: (id: string, expectedVersion: number, comment?: string) =>
+    api<SpecVersionDetails>('POST', `/api/v1/spec-versions/${id}/approve`, { expectedVersion, comment }),
+  reject: (id: string, expectedVersion: number, reason: string) =>
+    api<SpecVersionDetails>('POST', `/api/v1/spec-versions/${id}/reject`, { expectedVersion, reason }),
+  retire: (id: string, expectedVersion: number, reason: string) =>
+    api<SpecVersionDetails>('POST', `/api/v1/spec-versions/${id}/retire`, { expectedVersion, reason }),
+  discard: (id: string, expectedVersion: number, reason: string) =>
+    api<void>('POST', `/api/v1/spec-versions/${id}/discard`, { expectedVersion, reason }),
 };

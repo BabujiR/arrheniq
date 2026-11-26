@@ -3,6 +3,8 @@ import { SessionProvider } from './auth/SessionProvider';
 import { AppLayout } from './layout/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { ListsPage } from './pages/ListsPage';
+import { SpecificationDetailPage } from './pages/SpecificationDetailPage';
+import { SpecificationsPage } from './pages/SpecificationsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { ProductsPage } from './pages/ProductsPage';
@@ -60,10 +62,40 @@ const testMethodsRoute = createRoute({
 
 const listsRoute = createRoute({ getParentRoute: () => appRoute, path: '/lists', component: ListsPage });
 
+const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+/** `?new=1&productId=…` opens the create dialog for a product (from the product page). */
+const specificationsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/specifications',
+  component: SpecificationsPage,
+  validateSearch: (search: Record<string, unknown>): { new?: string; productId?: string } => ({
+    new: str(search.new),
+    productId: str(search.productId),
+  }),
+});
+/** `?v=<version id>` selects a version; `&signing=1` marks the return from re-authentication. */
+const specificationRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/specifications/$specId',
+  component: SpecificationDetailPage,
+  validateSearch: (search: Record<string, unknown>): { v?: string; signing?: string } => ({
+    v: str(search.v),
+    signing: str(search.signing),
+  }),
+});
+
 const routeTree = rootRoute.addChildren([
   signedOutRoute,
   welcomeRoute,
-  appRoute.addChildren([indexRoute, productsRoute, productRoute, testMethodsRoute, listsRoute]),
+  appRoute.addChildren([
+    indexRoute,
+    productsRoute,
+    productRoute,
+    specificationsRoute,
+    specificationRoute,
+    testMethodsRoute,
+    listsRoute,
+  ]),
 ]);
 
 export const router = createRouter({ routeTree });

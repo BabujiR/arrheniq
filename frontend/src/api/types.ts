@@ -167,3 +167,85 @@ export interface ProtocolTemplate {
   source: string;
   note: string;
 }
+
+/** A specification in lists (backend masterdata.SpecificationSummary; URS-MD-003/004). */
+export interface SpecificationSummary {
+  id: string;
+  specNumber: string;
+  title: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  siteId: string;
+  effectiveVersionNo: number | null;
+  effectiveFrom: string | null;
+  openVersionId: string | null;
+  openVersionNo: number | null;
+  openStatus: 'DRAFT' | 'IN_REVIEW' | null;
+}
+
+export type SpecVersionStatus = 'DRAFT' | 'IN_REVIEW' | 'EFFECTIVE' | 'SUPERSEDED' | 'RETIRED';
+
+export interface SpecVersionSummary {
+  id: string;
+  versionNo: number;
+  status: SpecVersionStatus;
+  effectiveFrom: string | null;
+  changeSummary: string | null;
+  testCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface SpecificationDetails {
+  specification: SpecificationSummary;
+  versions: SpecVersionSummary[];
+}
+
+export interface SpecTest {
+  testMethodId: string;
+  testCode: string;
+  testStatus: 'ACTIVE' | 'RETIRED';
+  sortOrder: number;
+  displayName: string;
+  resultsFormat: ResultsFormat;
+  unitCode: string | null;
+  replicates: number;
+  decimals: number | null;
+  lowerLimit: number | null;
+  upperLimit: number | null;
+  textLimit: string | null;
+  alertLower: number | null;
+  alertUpper: number | null;
+  trendable: boolean;
+}
+
+export interface SpecTestInput {
+  testMethodId: string;
+  displayName?: string | null;
+  unitCode?: string | null;
+  replicates?: number | null;
+  decimals?: number | null;
+  lowerLimit?: number | null;
+  upperLimit?: number | null;
+  textLimit?: string | null;
+  alertLower?: number | null;
+  alertUpper?: number | null;
+  trendable?: boolean | null;
+}
+
+export interface SpecVersionDetails {
+  id: string;
+  version: number;
+  specification: SpecificationSummary;
+  versionNo: number;
+  status: SpecVersionStatus;
+  effectiveFrom: string | null;
+  changeSummary: string | null;
+  tests: SpecTest[];
+  previousVersionId: string | null;
+  signatures: Signature[];
+  approval: ApprovalProgress;
+  createdAt: string;
+  updatedAt: string | null;
+}
