@@ -42,9 +42,11 @@ class SessionJsonTest {
     /** Like a real login (ArrheniqOidcUserService): an authority and IdP user info. */
     private static OAuth2AuthenticationToken realisticAuthentication() {
         Instant now = Instant.now();
+        // claim shapes as Keycloak sends them: an immutable list, a nested object, numbers, booleans, Instants
         OidcIdToken idToken = new OidcIdToken("token-value", now, now.plusSeconds(300), Map.of(
                 "iss", SecurityTestSupport.ISSUER, "sub", "sub-1", "aud", List.of("arrheniq-app"),
-                "preferred_username", "kim", "auth_time", now.getEpochSecond(), "email_verified", true));
+                "preferred_username", "kim", "auth_time", now.getEpochSecond(), "email_verified", true,
+                "iat", now, "realm_access", Map.of("roles", List.of("offline_access", "uma_authorization"))));
         OidcUserInfo info = new OidcUserInfo(Map.of("sub", "sub-1", "email", "kim@acme.test", "name", "Kim Analyst"));
         ArrheniqUser user = new ArrheniqUser(List.of(new SimpleGrantedAuthority("ARQ_USER")), idToken, info, TENANT,
                 "acme", USER, "kim", "Kim Analyst");
@@ -75,6 +77,13 @@ class SessionJsonTest {
         assertEquals(SecurityTestSupport.ISSUER, String.valueOf(user.getIdToken().getIssuer()));
         assertEquals("sub-1", user.getAttribute("sub"));
         assertEquals("kim@acme.test", user.getEmail());
+        assertEquals(List.of("arrheniq-app"), user.getAudience());
+        assertEquals(Boolean.TRUE, user.getEmailVerified());
+        OidcIdToken original = ((ArrheniqUser) auth.getPrincipal()).getIdToken();
+        assertEquals(original.getIssuedAt(), user.getIdToken().getIssuedAt());
+        assertEquals(original.getExpiresAt(), user.getIdToken().getExpiresAt());
+        assertEquals(original.getTokenValue(), user.getIdToken().getTokenValue());
+        assertEquals(Map.of("roles", List.of("offline_access", "uma_authorization")), user.getClaim("realm_access"));
         assertTrue(user.getAuthorities().stream().anyMatch(a -> "ARQ_USER".equals(a.getAuthority())));
         assertEquals(auth.getAuthorizedClientRegistrationId(), token.getAuthorizedClientRegistrationId());
         assertTrue(token.isAuthenticated());

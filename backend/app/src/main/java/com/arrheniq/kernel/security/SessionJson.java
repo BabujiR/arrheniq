@@ -23,8 +23,9 @@ import java.util.stream.Stream;
  * no native deserialization of stored data).
  * <p>
  * Format of one attribute: {@code <class name>\n<JSON>}. Only the classes in {@link #ALLOWED} may be stored or
- * read; nested polymorphic values (the authentication, its principal, ID-token claims) are typed and validated by
- * Spring Security's Jackson modules, extended with {@link ArrheniqUser}. Writing any other type fails loudly
+ * read; nested polymorphic values (the authentication and its principal) are typed and validated by Spring
+ * Security's Jackson modules, extended with {@link ArrheniqUser}, whose token claims are stored as plain JSON text
+ * ({@link ArrheniqUserSessionForm}) so no claim can name a Java type. Writing any other type fails loudly
  * (a developer added a session attribute without allow-listing it); reading one returns {@code null} and is
  * logged (a stored value that this version does not accept is treated as absent, never instantiated).
  */
