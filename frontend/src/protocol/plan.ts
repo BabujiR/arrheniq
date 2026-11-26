@@ -22,8 +22,16 @@ export function addTimepoint(c: ProtocolContent, value: number, unit: TimeUnit):
   let at = c.timepoints.findIndex((t) => t.value * DAYS[t.unit] > days);
   if (at < 0) at = c.timepoints.length;
   const timepoints = [...c.timepoints.slice(0, at), tp, ...c.timepoints.slice(at)];
-  const tests = c.tests.map((t) => ({ ...t, at: t.at.map((i) => (i >= at ? i + 1 : i)) }));
+  // every test runs at a new time point until it is cleared (the usual case: the full panel at each pull)
+  const tests = c.tests.map((t) => ({ ...t, at: [...t.at.map((i) => (i >= at ? i + 1 : i)), at].sort((a, b) => a - b) }));
   return { ...c, timepoints, tests };
+}
+
+/** "30 bottles in total", "1 bottle in total", "12 units in total". */
+export function totalLabel(total: number, unitOfInventory: string | null): string {
+  const unit = unitOfInventory?.trim().toLowerCase() || 'unit';
+  const plural = total === 1 || unit.endsWith('s') ? unit : `${unit}s`;
+  return `${total} ${plural} in total`;
 }
 
 /** Removes a time point and every grid cell at it. */

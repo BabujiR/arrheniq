@@ -14,7 +14,7 @@ const COLORS: Record<string, string> = {
 
 export function StatusBadge({ status }: { status: string }) {
   return (
-    <Badge color={COLORS[status] ?? 'gray'} variant="light">
+    <Badge color={COLORS[status] ?? 'gray'} variant="light" style={{ flexShrink: 0 }}>
       {status.replace('_', ' ')}
     </Badge>
   );

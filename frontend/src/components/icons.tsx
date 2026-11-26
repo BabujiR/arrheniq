@@ -157,6 +157,14 @@ export const IconReject = (p: P) => (
   </Svg>
 );
 
+/** Remove a row or column from an editor (not a workflow step). */
+export const IconRemove = (p: P) => (
+  <Svg name="remove" {...p}>
+    <path d="M6 6l12 12" />
+    <path d="M18 6 6 18" />
+  </Svg>
+);
+
 /** Retire: archive box. */
 export const IconArchive = (p: P) => (
   <Svg name="archive" {...p}>

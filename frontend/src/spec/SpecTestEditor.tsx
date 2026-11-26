@@ -1,6 +1,6 @@
 import { ActionIcon, Badge, Group, NumberInput, Select, Table, Text, TextInput, Tooltip } from '@mantine/core';
 import type { SpecTest, TestMethod } from '../api/types';
-import { IconPlus, IconReject } from '../components/icons';
+import { IconPlus, IconRemove } from '../components/icons';
 import { alertText, limitText, type VersionChanges } from './limits';
 
 type NumField = 'lowerLimit' | 'upperLimit' | 'alertLower' | 'alertUpper' | 'decimals' | 'replicates';
@@ -197,7 +197,7 @@ export function SpecTestEditor({ rows, editable, onChange, errors, library, chan
                       </ActionIcon>
                       <ActionIcon size="sm" variant="subtle" color="red" aria-label="Remove test"
                                   onClick={() => onChange(rows.filter((_, j) => j !== i))}>
-                        <IconReject size={14} />
+                        <IconRemove size={14} />
                       </ActionIcon>
                     </Group>
                   </Table.Td>

@@ -19,8 +19,8 @@ import {
 } from '@mantine/core';
 import type { DictionaryValue, ProtocolContent, StudyType, TestMethod, TimeUnit } from '../api/types';
 import { label } from '../components/format';
-import { IconPlus, IconReject } from '../components/icons';
-import { addTimepoint, planWarnings, removeTimepoint, testsAt, toggleCell, toggleColumn, totalUnits } from './plan';
+import { IconPlus, IconRemove } from '../components/icons';
+import { addTimepoint, planWarnings, removeTimepoint, testsAt, toggleCell, toggleColumn, totalLabel, totalUnits } from './plan';
 
 export const STUDY_TYPES: StudyType[] = [
   'LONG_TERM',
@@ -99,6 +99,7 @@ export function ProtocolEditor({ content: c, editable, onChange, library, condit
             <NumberInput
               label="Reserve units"
               description="For re-tests and investigations"
+              inputWrapperOrder={['label', 'input', 'description', 'error']}
               min={0}
               value={c.reserveUnits}
               error={errors.reserveUnits}
@@ -118,8 +119,8 @@ export function ProtocolEditor({ content: c, editable, onChange, library, condit
       <div>
         <Group justify="space-between" mb={6}>
           <Title order={5}>Time points and tests</Title>
-          <Badge variant="light" color="teal" size="lg">
-            {totalUnits(c)} {c.fillUnitCode?.toLowerCase() ?? 'units'} in total
+          <Badge variant="light" color="teal" size="lg" tt="none">
+            {totalLabel(totalUnits(c), c.fillUnitCode)}
           </Badge>
         </Group>
         <Table.ScrollContainer minWidth={360 + c.timepoints.length * 72}>
@@ -144,10 +145,12 @@ export function ProtocolEditor({ content: c, editable, onChange, library, condit
                         </Text>
                       )}
                       {editable && (
-                        <ActionIcon size="xs" variant="subtle" color="red" aria-label={`Remove ${t.label}`}
-                                    onClick={() => onChange(removeTimepoint(c, i))}>
-                          <IconReject size={12} />
-                        </ActionIcon>
+                        <Tooltip label={`Remove ${t.label}`}>
+                          <ActionIcon size="xs" variant="subtle" color="gray" aria-label={`Remove ${t.label}`}
+                                      onClick={() => onChange(removeTimepoint(c, i))}>
+                            <IconRemove size={12} />
+                          </ActionIcon>
+                        </Tooltip>
                       )}
                     </Stack>
                   </Table.Th>
@@ -173,9 +176,10 @@ export function ProtocolEditor({ content: c, editable, onChange, library, condit
                         )}
                       </Group>
                       {editable && (
-                        <ActionIcon size="sm" variant="subtle" color="red" aria-label={`Remove ${test.testCode}`}
+                        <ActionIcon size="sm" variant="subtle" color="gray" aria-label={`Remove ${test.testCode}`}
+                                    title={`Remove ${test.testCode} from the plan`}
                                     onClick={() => onChange({ ...c, tests: c.tests.filter((_, j) => j !== ti) })}>
-                          <IconReject size={14} />
+                          <IconRemove size={14} />
                         </ActionIcon>
                       )}
                     </Group>
