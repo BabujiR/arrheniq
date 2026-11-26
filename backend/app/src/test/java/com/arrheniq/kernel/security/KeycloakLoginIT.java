@@ -56,8 +56,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Requirement({"URS-IAM-001", "URS-IAM-002", "URS-ESG-002", "URS-AUD-001"})
 class KeycloakLoginIT extends PostgresIntegrationTest {
 
-    /** Same major version as infra/compose (local development). */
-    private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:26.0";
+    /** Same version as infra/compose (local development); keep the two in step. */
+    private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:26.8";
     private static final String REALM = "arrheniq-it";
     private static final String TENANT_SLUG = "kcit";
     private static final Pattern LOGIN_FORM = Pattern.compile("<form[^>]*\\bid=\"kc-form-login\"[^>]*>");
@@ -116,7 +116,7 @@ class KeycloakLoginIT extends PostgresIntegrationTest {
         if (!userInvited) {
             tenant = provisionTenantWithSlug(TENANT_SLUG);
             TransactionTemplate tx = new TransactionTemplate(txManager);
-            TenantContextHolder.callAs(TenantContext.system(tenant), () -> tx.execute(s -> {
+            TenantContextHolder.callAs(TenantContext.system(tenant), () -> tx.execute(_ -> {
                 audit.open("it.invite");
                 return invitations.invite(AuditActor.system("it"), new UserInvitationService.Invitation(
                         "kcuser", "kcuser@kcit.test", "Kim Cloak",
@@ -145,7 +145,8 @@ class KeycloakLoginIT extends PostgresIntegrationTest {
 
         // 2. re-authentication for a signature: Keycloak must ask for the password again
         browser.history.clear();
-        HttpResponse<String> reauthForm = browser.get(app("/auth/reauth?purpose=SIGN&returnTo=/api/v1/me"));
+        HttpResponse<String> reauthForm = browser.get(app("/auth/reauth?purpose=SIGN&returnTo=/api/v1/me"
+                + "&recordType=PRODUCT&recordId=" + UUID.randomUUID() + "&recordVersion=0"));
         String reauthUrl = browser.history.stream().filter(u -> u.contains("/protocol/openid-connect/auth?"))
                 .findFirst().orElseThrow();
         assertTrue(reauthUrl.contains("prompt=login") && reauthUrl.contains("max_age=0"), reauthUrl);

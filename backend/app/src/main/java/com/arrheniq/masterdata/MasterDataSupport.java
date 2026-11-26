@@ -4,9 +4,13 @@ import com.arrheniq.kernel.audit.AuditActor;
 import com.arrheniq.kernel.security.CurrentUser;
 import com.arrheniq.kernel.security.CurrentUserHolder;
 import org.jspecify.annotations.Nullable;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.Map;
 
 /** Helpers shared by the master-data services. */
 final class MasterDataSupport {
@@ -31,5 +35,16 @@ final class MasterDataSupport {
 
     static @Nullable Instant instant(@Nullable OffsetDateTime t) {
         return t == null ? null : t.toInstant();
+    }
+
+    /** Plain JSON (exact decimals), for jsonb columns read back as text. */
+    private static final JsonMapper JSON = JsonMapper.builder()
+            .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+            .build();
+    private static final TypeReference<Map<String, Object>> OBJECT = new TypeReference<>() { };
+
+    /** Parses a JSON object stored in a jsonb column (e.g. list-value attributes). */
+    static Map<String, Object> jsonObject(String json) {
+        return JSON.readValue(json, OBJECT);
     }
 }

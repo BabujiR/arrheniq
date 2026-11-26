@@ -75,4 +75,13 @@ public final class ArrheniqUser extends DefaultOidcUser {
     public int hashCode() {
         return Objects.hash(super.hashCode(), tenantId, userId);
     }
+
+    /** Stored form in the session (see {@link ArrheniqUserSessionForm}, {@link SessionJson}). */
+    ArrheniqUserSessionForm sessionForm() {
+        return ArrheniqUserSessionForm.of(this);
+    }
+
+    static ArrheniqUser fromSessionForm(ArrheniqUserSessionForm form) {
+        return form.toUser();
+    }
 }

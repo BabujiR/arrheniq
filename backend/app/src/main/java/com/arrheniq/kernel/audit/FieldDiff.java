@@ -40,8 +40,8 @@ public final class FieldDiff {
             if (TECHNICAL_FIELDS.contains(field)) {
                 continue;
             }
-            @Nullable Object oldValue = before == null ? null : before.get(field);
-            @Nullable Object newValue = after == null ? null : after.get(field);
+            Object oldValue = before == null ? null : before.get(field);
+            Object newValue = after == null ? null : after.get(field);
             if (!sameValue(oldValue, newValue)) {
                 changes.add(new FieldChange(field, oldValue, newValue));
             }

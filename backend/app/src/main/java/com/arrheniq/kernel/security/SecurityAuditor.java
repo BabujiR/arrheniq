@@ -12,6 +12,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -58,10 +59,16 @@ public class SecurityAuditor {
      * context opened, so it may write to GxP/SECURITY tables and append audit events.
      */
     public <T extends @Nullable Object> T inTenantTransaction(UUID tenantId, String operation, Supplier<T> work) {
-        return TenantContextHolder.callAs(TenantContext.system(tenantId), () -> requiresNew.execute(status -> {
-            audit.open(operation);
-            return work.get();
-        }));
+        // the result is passed out through a holder: TransactionTemplate.execute is declared to return a nullable
+        // value, which would make every caller's result nullable even when the work never returns null
+        return TenantContextHolder.callAs(TenantContext.system(tenantId), () -> {
+            List<T> result = new ArrayList<>(1);
+            requiresNew.executeWithoutResult(_ -> {
+                audit.open(operation);
+                result.add(work.get());
+            });
+            return result.getFirst();
+        });
     }
 
     public static AuditActor actorFor(ArrheniqUser user) {

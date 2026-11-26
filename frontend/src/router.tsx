@@ -2,6 +2,7 @@ import { Outlet, createRootRoute, createRoute, createRouter } from '@tanstack/re
 import { SessionProvider } from './auth/SessionProvider';
 import { AppLayout } from './layout/AppLayout';
 import { HomePage } from './pages/HomePage';
+import { ListsPage } from './pages/ListsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { ProductsPage } from './pages/ProductsPage';
@@ -57,10 +58,12 @@ const testMethodsRoute = createRoute({
   validateSearch: listSearch,
 });
 
+const listsRoute = createRoute({ getParentRoute: () => appRoute, path: '/lists', component: ListsPage });
+
 const routeTree = rootRoute.addChildren([
   signedOutRoute,
   welcomeRoute,
-  appRoute.addChildren([indexRoute, productsRoute, productRoute, testMethodsRoute]),
+  appRoute.addChildren([indexRoute, productsRoute, productRoute, testMethodsRoute, listsRoute]),
 ]);
 
 export const router = createRouter({ routeTree });

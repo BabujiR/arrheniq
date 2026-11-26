@@ -26,17 +26,27 @@ they would have to be re-verified in validation (OQ) for every entity.
    `/auth/reauth?purpose=SIGN` (forced `prompt=login&max_age=0`, verified `auth_time`), then calls
    `POST …/approve` within 5 minutes. The server checks permission, status and segregation of duties first,
    then consumes the single-use evidence, re-reads the locked record and writes signature, status change and
-   audit events in one transaction. **Deferred:** binding the re-authentication to one specific record
-   (a signing intent carried in the OIDC `nonce`); today the evidence is bound to the user and the purpose.
+   audit events in one transaction. **Signing intent (added in S1.1):** `/auth/reauth?purpose=SIGN` must name the
+   record (`recordType`, `recordId`, `recordVersion`). The server stores this `SigningIntent` with the pending
+   re-authentication, copies it into the evidence after the IdP round trip, and `SignatureService` refuses to sign
+   any other record or version (`409 ARQ-ESG-004`); the intent id is stored on the signature
+   (`e_signature.signing_intent_id`) and in the REAUTH_SUCCESS and SIGN audit events. The intent stays on the
+   server (session) instead of the OIDC `nonce` proposed earlier: the nonce is generated and checked by Spring
+   Security, the session is already server-side and single-use, and the IdP never needs to know what is signed.
 5. **Segregation of duties for approvals:** the approver may not be the last person who changed the content
    (from the audit trail) or who submitted it.
+6. **Configurable approval (added in S1.1, URS-MD-004):** tenant setting `approval.<kind>` (a site value overrides
+   the tenant default) = `NONE` (submitting makes the record effective, no signature; the audit trail says why),
+   `SINGLE` (one signature, meaning APPROVED) or `DOUBLE` (REVIEWED, then APPROVED by a different person,
+   `403 ARQ-SOD-002` otherwise). A missing or unreadable value means SINGLE. Only signatures still VALID count;
+   editing or rejecting supersedes them. Shared by every approvable record: `kernel.esign.ApprovalService`.
 
 ## Consequences
 + The audit trail, the signature hash and the SQL are visible in one place per command; easier to review and
   to validate.
 + No ORM behaviour to qualify for GxP writes.
 − More hand-written SQL per entity (mitigated by a fixed pattern and integration tests per module).
-− The signing-intent binding (decision 4) must be added before the first pilot's PQ.
+− ~~The signing-intent binding (decision 4) must be added before the first pilot's PQ.~~ Done in S1.1.
 
 ## Alternatives considered
 - Keep JPA for writes with entity listeners producing the audit diff (rejected: the diff and the SQL would

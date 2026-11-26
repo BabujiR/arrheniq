@@ -1,6 +1,6 @@
 package com.arrheniq.kernel.security;
 
-/** Names of the session attributes owned by the security kernel (values are small and serializable). */
+/** Names of the session attributes owned by the security kernel (value types must be allow-listed in {@link SessionJson}). */
 final class SessionKeys {
 
     static final String LOGIN_AT = "arq.loginAt";

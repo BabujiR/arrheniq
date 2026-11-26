@@ -28,7 +28,7 @@ import java.util.UUID;
 @Service
 public class AuditService {
 
-    private static final RowMapper<Tail> TAIL = (rs, n) -> new Tail(rs.getLong("seq"), rs.getBytes("hash"));
+    private static final RowMapper<Tail> TAIL = (rs, _) -> new Tail(rs.getLong("seq"), rs.getBytes("hash"));
 
     private final JdbcClient jdbc;
     private final ReasonPolicy reasonPolicy;
@@ -68,7 +68,7 @@ public class AuditService {
         // serialise appends for this tenant (transaction-scoped lock, released at commit/rollback)
         jdbc.sql("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))")
             .param(ctx.tenantId().toString())
-            .query((rs, n) -> 1)
+            .query((_, _) -> 1)
             .single();
 
         Tail tail = jdbc.sql("SELECT seq, hash FROM audit.audit_event ORDER BY seq DESC LIMIT 1")

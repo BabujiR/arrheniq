@@ -80,6 +80,28 @@ export const IconTest = (p: P) => (
   </Svg>
 );
 
+/** Controlled lists: a list with bullets. */
+export const IconList = (p: P) => (
+  <Svg name="list" {...p}>
+    <rect className="d" x="3.5" y="4" width="17" height="16" rx="2.5" />
+    <rect x="3.5" y="4" width="17" height="16" rx="2.5" />
+    <circle cx="7.5" cy="9" r=".9" />
+    <circle cx="7.5" cy="12.5" r=".9" />
+    <circle cx="7.5" cy="16" r=".9" />
+    <path className="lines" d="M10.5 9h6.5M10.5 12.5h6.5M10.5 16h4.5" />
+  </Svg>
+);
+
+/** Time-point plan: a calendar. */
+export const IconCalendar = (p: P) => (
+  <Svg name="calendar" {...p}>
+    <rect className="d" x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+    <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+    <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+    <path d="M8 13h2M12 13h2M8 16.5h2" />
+  </Svg>
+);
+
 export const IconPlus = (p: P) => (
   <Svg name="plus" {...p}>
     <path d="M12 5v14M5 12h14" />

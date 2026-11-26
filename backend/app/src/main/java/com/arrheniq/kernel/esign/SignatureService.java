@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.esign;
 
+import com.arrheniq.kernel.api.ApiException;
 import com.arrheniq.kernel.audit.AuditActor;
 import com.arrheniq.kernel.audit.AuditEventDraft;
 import com.arrheniq.kernel.audit.AuditService;
@@ -9,6 +10,7 @@ import com.arrheniq.kernel.security.CurrentUser;
 import com.arrheniq.kernel.security.CurrentUserHolder;
 import com.arrheniq.kernel.security.ReauthEvidence;
 import com.arrheniq.kernel.security.ReauthRequest;
+import com.arrheniq.kernel.security.SigningIntent;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.core.Authentication;
@@ -17,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URL;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +31,8 @@ import java.util.UUID;
 /**
  * Electronic signatures (audit-esignature.md §9; URS-ESG-001..003; Part 11 §11.50, §11.70, §11.200).
  * A signature is written in the same transaction as the state change it authorises, together with a
- * SIGN audit event. It needs fresh re-authentication evidence of the signer ({@code ReauthGuard}).
+ * SIGN audit event. It needs fresh re-authentication evidence of the signer ({@code ReauthGuard}) whose
+ * {@link SigningIntent} names exactly this record version.
  */
 @Service
 public class SignatureService {
@@ -52,11 +57,20 @@ public class SignatureService {
         if (!evidence.userId().equals(signer.userId()) || evidence.purpose() != ReauthRequest.Purpose.SIGN) {
             throw new IllegalStateException("ARQ-ESG-002: re-authentication evidence does not belong to the signer");
         }
+        // the password was entered for exactly this record version (ADR 0019 amended; Part 11 §11.70)
+        SigningIntent intent = evidence.intent();
+        if (intent == null || !intent.covers(recordType, recordId, recordVersion)) {
+            throw ApiException.signingIntentMismatch();
+        }
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof ArrheniqUser principal)) {
             throw new IllegalStateException("ARQ-ESG-003: signing needs an interactive user session");
         }
-        String issuer = principal.getIdToken().getIssuer().toString();
+        URL issuerUrl = principal.getIdToken().getIssuer();
+        if (issuerUrl == null) {   // Spring Security validates iss at login; checked again because the signature records it
+            throw new IllegalStateException("ARQ-ESG-005: the signer's ID token has no issuer");
+        }
+        String issuer = issuerUrl.toString();
         String acr = principal.getIdToken().getAuthenticationContextClass();
         byte[] contentHash = RecordHasher.contentHash(businessContent);
         UUID id = UUID.randomUUID();
@@ -65,13 +79,14 @@ public class SignatureService {
         OffsetDateTime signedAt = jdbc.sql("""
                 INSERT INTO audit.e_signature (tenant_id, id, record_type, record_id, record_version, content_hash,
                                                meaning, signer_user_id, signer_name, signed_at, auth_time,
-                                               idp_issuer, idp_acr, comment)
-                VALUES (app.current_tenant(), ?, ?, ?, ?, ?, ?, ?, ?, clock_timestamp(), ?, ?, ?, ?)
+                                               idp_issuer, idp_acr, signing_intent_id, comment)
+                VALUES (app.current_tenant(), ?, ?, ?, ?, ?, ?, ?, ?, clock_timestamp(), ?, ?, ?, ?, ?)
                 RETURNING signed_at
                 """)
-            .params(id, recordType, recordId, recordVersion, contentHash, meaning, signer.userId(),
+            // as a list: idp_acr and comment may be NULL (JdbcClient's varargs are declared non-null)
+            .params(Arrays.asList(id, recordType, recordId, recordVersion, contentHash, meaning, signer.userId(),
                     signer.displayName(), OffsetDateTime.ofInstant(evidence.authTime(), ZoneOffset.UTC),
-                    issuer, acr, trimmedComment)
+                    issuer, acr, intent.id(), trimmedComment))
             .query(OffsetDateTime.class)
             .single();
 
@@ -80,6 +95,7 @@ public class SignatureService {
                         List.of(new FieldChange("meaning", null, meaning),
                                 new FieldChange("contentHash", null, HexFormat.of().formatHex(contentHash)),
                                 new FieldChange("authTime", null, evidence.authTime()),
+                                new FieldChange("signingIntent", null, intent.id()),
                                 new FieldChange("signatureId", null, id)),
                         null, null, null));
         return new Signature(id, meaning, signer.userId(), signer.displayName(), signedAt.toInstant(), recordVersion,
@@ -117,7 +133,7 @@ public class SignatureService {
                  ORDER BY s.signed_at DESC
                 """)
             .params(recordType, recordId)
-            .query((rs, n) -> new Signature(rs.getObject("id", UUID.class), rs.getString("meaning"),
+            .query((rs, _) -> new Signature(rs.getObject("id", UUID.class), rs.getString("meaning"),
                     rs.getObject("signer_user_id", UUID.class), rs.getString("signer_name"),
                     rs.getObject("signed_at", OffsetDateTime.class).toInstant(), rs.getLong("record_version"),
                     rs.getString("status"), rs.getString("comment")))

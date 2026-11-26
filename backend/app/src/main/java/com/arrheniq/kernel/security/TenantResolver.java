@@ -33,7 +33,7 @@ public class TenantResolver {
     public Optional<ResolvedTenant> bySlug(String slug) {
         return jdbc.sql("SELECT id, slug, display_name, status FROM platform.tenant WHERE slug = ?")
                 .param(slug)
-                .query((rs, n) -> new ResolvedTenant(rs.getObject("id", UUID.class), rs.getString("slug"),
+                .query((rs, _) -> new ResolvedTenant(rs.getObject("id", UUID.class), rs.getString("slug"),
                         rs.getString("display_name"), rs.getString("status")))
                 .optional();
     }
@@ -41,7 +41,7 @@ public class TenantResolver {
     public Optional<ResolvedTenant> byId(UUID id) {
         return jdbc.sql("SELECT id, slug, display_name, status FROM platform.tenant WHERE id = ?")
                 .param(id)
-                .query((rs, n) -> new ResolvedTenant(rs.getObject("id", UUID.class), rs.getString("slug"),
+                .query((rs, _) -> new ResolvedTenant(rs.getObject("id", UUID.class), rs.getString("slug"),
                         rs.getString("display_name"), rs.getString("status")))
                 .optional();
     }

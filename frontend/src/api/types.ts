@@ -101,7 +101,69 @@ export interface Signature {
   comment: string | null;
 }
 
+/** Where an approval stands (backend ApprovalService.Progress; tenant setting approval.<kind>). */
+export interface ApprovalProgress {
+  level: 'NONE' | 'SINGLE' | 'DOUBLE';
+  required: number;
+  collected: number;
+}
+
 export interface ProductDetails {
   product: Product;
   signatures: Signature[];
+  approval: ApprovalProgress;
+}
+
+/** A controlled list (backend masterdata.Dictionary; URS-MD-006). */
+export interface Dictionary {
+  id: string;
+  code: string;
+  name: string;
+  category: 'STABILITY' | 'PACKAGING' | 'RESULTS' | 'ORGANISATION' | 'SYSTEM';
+  systemManaged: boolean;
+  activeValues: number;
+  retiredValues: number;
+}
+
+export type AttributeValue = string | number | boolean;
+
+export interface DictionaryValue {
+  id: string;
+  version: number;
+  dictionaryCode: string;
+  code: string;
+  label: string;
+  description: string | null;
+  sortOrder: number;
+  siteId: string | null;
+  attributes: Record<string, AttributeValue>;
+  status: 'ACTIVE' | 'RETIRED';
+  /** shipped with ArrheniQ (e.g. ICH conditions): retire only */
+  fromCatalog: boolean;
+  /** referenced by a record: retire only */
+  inUse: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface DictionaryValueInput {
+  code?: string;
+  label?: string;
+  description?: string | null;
+  sortOrder?: number;
+  siteId?: string | null;
+  attributes?: Record<string, AttributeValue>;
+}
+
+/** ICH time-point template (backend masterdata.ProtocolTemplate; URS-MD-007). */
+export interface ProtocolTemplate {
+  code: string;
+  name: string;
+  studyType: string;
+  conditionCode: string;
+  conditionLabel: string;
+  timepointUnit: 'DAY' | 'WEEK' | 'MONTH';
+  timepoints: number[];
+  source: string;
+  note: string;
 }

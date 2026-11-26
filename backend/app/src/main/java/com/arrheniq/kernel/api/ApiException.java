@@ -53,6 +53,19 @@ public class ApiException extends RuntimeException {
                 "The person who last changed or submitted the record can't approve it", List.of());
     }
 
+    /** The same person tried to sign a second approval step of the same record. */
+    public static ApiException alreadySigned() {
+        return new ApiException(403, "ARQ-SOD-002",
+                "You have already signed this record; a different approver must sign the next step", List.of());
+    }
+
+    /** The re-authentication was started for another record or another version of this one. */
+    public static ApiException signingIntentMismatch() {
+        return new ApiException(409, "ARQ-ESG-004",
+                "Your signature confirmation was for a different record or version; review it again and re-sign",
+                List.of());
+    }
+
     public int status() {
         return status;
     }

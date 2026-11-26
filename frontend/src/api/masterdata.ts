@@ -1,5 +1,15 @@
 import { api } from './http';
-import type { Product, ProductDetails, ProductInput, TestMethod, TestMethodInput } from './types';
+import type {
+  Dictionary,
+  DictionaryValue,
+  DictionaryValueInput,
+  Product,
+  ProductDetails,
+  ProductInput,
+  ProtocolTemplate,
+  TestMethod,
+  TestMethodInput,
+} from './types';
 
 /** Query keys (TanStack Query) and calls for the master-data API (backend module `masterdata`). */
 export const keys = {
@@ -9,6 +19,9 @@ export const keys = {
   products: (filter: { q?: string; status?: string }) => ['products', filter] as const,
   productsAll: ['products'] as const,
   product: (id: string) => ['product', id] as const,
+  dictionaries: ['dictionaries'] as const,
+  dictionaryValues: (code: string) => ['dictionary-values', code] as const,
+  protocolTemplates: ['protocol-templates'] as const,
 };
 
 function query(params: Record<string, string | undefined>): string {
@@ -47,4 +60,23 @@ export const productsApi = {
     api<ProductDetails>('POST', `/api/v1/products/${id}/reject`, { expectedVersion, reason }),
   retire: (id: string, expectedVersion: number, reason: string) =>
     api<ProductDetails>('POST', `/api/v1/products/${id}/retire`, { expectedVersion, reason }),
+};
+
+export const dictionariesApi = {
+  lists: () => api<Dictionary[]>('GET', '/api/v1/dictionaries'),
+  values: (code: string) => api<DictionaryValue[]>('GET', `/api/v1/dictionaries/${code}/values`),
+  create: (code: string, input: DictionaryValueInput) =>
+    api<DictionaryValue>('POST', `/api/v1/dictionaries/${code}/values`, input),
+  update: (code: string, id: string, expectedVersion: number, data: DictionaryValueInput, reason?: string) =>
+    api<DictionaryValue>('PUT', `/api/v1/dictionaries/${code}/values/${id}`, { expectedVersion, reason, data }),
+  retire: (code: string, id: string, expectedVersion: number, reason: string) =>
+    api<DictionaryValue>('POST', `/api/v1/dictionaries/${code}/values/${id}/retire`, { expectedVersion, reason }),
+  reactivate: (code: string, id: string, expectedVersion: number, reason?: string) =>
+    api<DictionaryValue>('POST', `/api/v1/dictionaries/${code}/values/${id}/reactivate`, { expectedVersion, reason }),
+  remove: (code: string, id: string, expectedVersion: number, reason: string) =>
+    api<void>('POST', `/api/v1/dictionaries/${code}/values/${id}/delete`, { expectedVersion, reason }),
+};
+
+export const protocolTemplatesApi = {
+  list: () => api<ProtocolTemplate[]>('GET', '/api/v1/protocol-templates'),
 };

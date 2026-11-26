@@ -55,14 +55,14 @@ public class MeController {
         if (scope.isEmpty()) {
             return List.of();
         }
-        return readOnly.execute(status -> {
+        return readOnly.execute(_ -> {
             String sql = "SELECT id, code, name, time_zone FROM app.site WHERE active AND deleted_at IS NULL"
                     + (scope.allSites() ? "" : " AND id = ANY (CAST(? AS uuid[]))") + " ORDER BY code";
             JdbcClient.StatementSpec spec = jdbc.sql(sql);
             if (!scope.allSites()) {
                 spec = spec.param(scope.siteIds().stream().map(UUID::toString).toArray(String[]::new));
             }
-            return spec.query((rs, n) -> new SiteRef(rs.getObject("id", UUID.class), rs.getString("code"),
+            return spec.query((rs, _) -> new SiteRef(rs.getObject("id", UUID.class), rs.getString("code"),
                     rs.getString("name"), rs.getString("time_zone"))).list();
         });
     }

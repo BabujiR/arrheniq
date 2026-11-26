@@ -21,7 +21,8 @@ import java.util.UUID;
 /**
  * REST API of products. Permissions and site scope are enforced by {@link ProductService}.
  * Approving is an e-signature: the SPA first sends the user through
- * {@code /auth/reauth?purpose=SIGN&returnTo=…}, then calls {@code POST /{id}/approve} within 5 minutes.
+ * {@code /auth/reauth?purpose=SIGN&recordType=PRODUCT&recordId=…&recordVersion=…&returnTo=…}, then calls
+ * {@code POST /{id}/approve} for that version within 5 minutes.
  */
 @RestController
 @RequestMapping("/api/v1/products")

@@ -73,7 +73,7 @@ public class UserInvitationService {
         if (inv.displayName().isBlank()) {
             throw new IllegalArgumentException("ARQ-IAM-003: display name required");
         }
-        Boolean taken = jdbc.sql("SELECT EXISTS (SELECT 1 FROM app.app_user WHERE username = ?)")
+        boolean taken = jdbc.sql("SELECT EXISTS (SELECT 1 FROM app.app_user WHERE username = ?)")
                 .param(username).query(Boolean.class).single();
         if (taken) {   // usernames are never reused, not even after deactivation (URS-IAM-001)
             throw new IllegalArgumentException("ARQ-IAM-004: username already used");
