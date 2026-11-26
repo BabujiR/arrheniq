@@ -219,6 +219,7 @@ public class ProductService {
                     p.version(), p.code(), p.siteId(),
                     List.of(new FieldChange("supersededSignatures", null, (long) superseded)), p.status(),
                     reason, null));
+            return get(id);   // re-read: the signatures changed after the status transition was read
         }
         return rejected;
     }

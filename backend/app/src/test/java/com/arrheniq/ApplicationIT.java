@@ -5,6 +5,7 @@ import com.arrheniq.testsupport.Requirement;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.IOException;
 import java.net.URI;
@@ -38,12 +39,16 @@ class ApplicationIT extends PostgresIntegrationTest {
     private Environment environment;
 
     @Test
-    void allMigrationsAreApplied() throws SQLException {
+    void allMigrationsAreApplied() throws Exception {
+        // every V<n>__*.sql shipped in the app, so a new migration needs no change here
+        int shipped = new PathMatchingResourcePatternResolver()
+                .getResources("classpath*:db/migration/V*__*.sql").length;
+        assertTrue(shipped >= 13, "migrations not found on the classpath: " + shipped);
         try (Connection c = ownerConnection();
              Statement s = c.createStatement();
              ResultSet rs = s.executeQuery("SELECT count(*) FROM flyway_schema_history WHERE success")) {
             rs.next();
-            assertEquals(12, rs.getInt(1), "expected V1..V12 applied");
+            assertEquals(shipped, rs.getInt(1), "every shipped migration must be applied");
         }
     }
 
