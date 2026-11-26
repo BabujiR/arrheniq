@@ -101,7 +101,15 @@ export interface Signature {
   comment: string | null;
 }
 
+/** Where an approval stands (backend ApprovalService.Progress; tenant setting approval.<kind>). */
+export interface ApprovalProgress {
+  level: 'NONE' | 'SINGLE' | 'DOUBLE';
+  required: number;
+  collected: number;
+}
+
 export interface ProductDetails {
   product: Product;
   signatures: Signature[];
+  approval: ApprovalProgress;
 }

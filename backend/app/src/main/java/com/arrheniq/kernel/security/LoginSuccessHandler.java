@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,12 +54,12 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         if (session.getAttribute(SessionKeys.PENDING_REAUTH) instanceof ReauthRequest pending) {
             session.removeAttribute(SessionKeys.PENDING_REAUTH);
             session.setAttribute(SessionKeys.REAUTH_EVIDENCE,
-                    new ReauthEvidence(user.tenantId(), user.userId(), pending.purpose(), authTime, now));
+                    new ReauthEvidence(user.tenantId(), user.userId(), pending.purpose(), authTime, now,
+                            pending.intent()));
             session.removeAttribute(SessionKeys.LOCKED);
             session.setAttribute(SessionKeys.LAST_ACTIVITY, now);
             auditor.record(user.tenantId(), SecurityAuditor.actorFor(user), "REAUTH_SUCCESS", user.userId(),
-                    user.username(), List.of(new FieldChange("purpose", null, pending.purpose().name()),
-                            new FieldChange("authTime", null, authTime)));
+                    user.username(), reauthChanges(pending, authTime));
             response.sendRedirect(SafeRedirects.orDefault(pending.returnTo(), props.postLoginPath()));
             return;
         }
@@ -67,7 +68,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             users.recordLogin(user.userId());
             auditor.recordInCurrentTransaction(SecurityAuditor.actorFor(user), "LOGIN_SUCCESS", user.userId(),
                     user.username(), List.of(new FieldChange("authTime", null, authTime),
-                            new FieldChange("idpIssuer", null, user.getIdToken().getIssuer().toString())));
+                            new FieldChange("idpIssuer", null, String.valueOf(user.getIdToken().getIssuer()))));
             return settings.forCurrentTenant();
         });
         session.setAttribute(SessionKeys.LOGIN_AT, now);
@@ -80,5 +81,19 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         String returnTo = session.getAttribute(SessionKeys.RETURN_TO) instanceof String r ? r : null;
         session.removeAttribute(SessionKeys.RETURN_TO);
         response.sendRedirect(SafeRedirects.orDefault(returnTo, props.postLoginPath()));
+    }
+
+    /** What the REAUTH_SUCCESS audit event records; for SIGN also the record the evidence is bound to. */
+    private static List<FieldChange> reauthChanges(ReauthRequest pending, Instant authTime) {
+        List<FieldChange> changes = new ArrayList<>();
+        changes.add(new FieldChange("purpose", null, pending.purpose().name()));
+        changes.add(new FieldChange("authTime", null, authTime));
+        SigningIntent intent = pending.intent();
+        if (intent != null) {
+            changes.add(new FieldChange("signingIntent", null, intent.id()));
+            changes.add(new FieldChange("intentRecord", null,
+                    intent.recordType() + ":" + intent.recordId() + "@v" + intent.recordVersion()));
+        }
+        return changes;
     }
 }

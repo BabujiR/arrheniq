@@ -44,10 +44,15 @@ public final class SecurityTestSupport {
         return session.getAttribute(SessionKeys.REAUTH_EVIDENCE) != null;
     }
 
-    /** What a successful {@code /auth/reauth?purpose=SIGN} round trip leaves in the session. */
-    public static void grantSigningReauth(MockHttpSession session, UUID tenant, UUID userId) {
+    /**
+     * What a successful {@code /auth/reauth?purpose=SIGN&recordType=…&recordId=…&recordVersion=…} round trip
+     * leaves in the session: evidence that can sign only that record version.
+     */
+    public static void grantSigningReauth(MockHttpSession session, UUID tenant, UUID userId, String recordType,
+                                          UUID recordId, long recordVersion) {
         Instant now = Instant.now();
         session.setAttribute(SessionKeys.REAUTH_EVIDENCE,
-                new ReauthEvidence(tenant, userId, ReauthRequest.Purpose.SIGN, now.minusSeconds(5), now));
+                new ReauthEvidence(tenant, userId, ReauthRequest.Purpose.SIGN, now.minusSeconds(5), now,
+                        new SigningIntent(UUID.randomUUID(), recordType, recordId, recordVersion)));
     }
 }

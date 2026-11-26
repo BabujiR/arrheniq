@@ -34,9 +34,11 @@ re-authentication is proven.
 + Clear separation: the IdP can't grant access to ArrheniQ data, and an admin can revoke access instantly.
 + Every security event (login, denial, re-authentication, lock, expiry, revocation, logout) is in the tenant's
   hash-chained audit trail.
-− Spring Session JDBC stores the session with Java serialization. It's a trusted store written only by the app,
-  but it conflicts with the "no native serialization" rule (security-architecture T16). **Follow-up (before
-  pilot):** switch the session attribute serializer to JSON with an allow-list of types.
+− ~~Spring Session JDBC stores the session with Java serialization~~ **Resolved in S1.1:** session attributes
+  are stored as JSON (`SessionJson`, bean `springSessionConversionService`): `<class name>\n<JSON>`, only
+  allow-listed classes are written or read, nested types are checked by Spring Security's Jackson type validator
+  (extended with `ArrheniqUser`). Migration V13 removed the old Java-serialized sessions (everyone signed in once
+  more). Test: `SessionJsonTest`; end to end: `KeycloakLoginIT`.
 − Failed logins at the IdP itself (wrong password) are only visible in the IdP's logs; lockout is the IdP's job
   (URS-IAM-003). Forwarding IdP events into the audit trail is a follow-up.
 

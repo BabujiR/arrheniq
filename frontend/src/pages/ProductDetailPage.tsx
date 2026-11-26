@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { Alert, Anchor, Button, Card, Center, Group, Loader, Modal, SimpleGrid, Stack, Text, Textarea, ThemeIcon, Title } from '@mantine/core';
+import { Alert, Anchor, Badge, Button, Card, Center, Group, Loader, Modal, SimpleGrid, Stack, Text, Textarea, ThemeIcon, Title, Tooltip } from '@mantine/core';
 import { ApiError } from '../api/http';
 import { keys, productsApi } from '../api/masterdata';
 import type { Product, ProductDetails, Signature } from '../api/types';
@@ -53,10 +53,18 @@ export function ProductDetailPage() {
   const approve = useMutation({
     mutationFn: ({ id, version, note }: { id: string; version: number; note: string }) =>
       productsApi.approve(id, version, note || undefined),
-    onSuccess: (d) => applied(d, `${d.product.code} approved and signed`),
+    onSuccess: (d) =>
+      applied(
+        d,
+        d.product.status === 'APPROVED'
+          ? `${d.product.code} approved and signed`
+          : `${d.product.code} reviewed and signed; a second approver must now approve it`,
+      ),
     onError: (error) => {
       if (error instanceof ApiError && error.code === 'ARQ-AUTH-REAUTH') {
         notifyError(new ApiError(401, error.code, 'Re-authentication expired; approve again'));
+      } else if (error instanceof ApiError && error.code === 'ARQ-ESG-004') {
+        notifyError(new ApiError(409, error.code, 'The product changed since you started signing; review it and approve again'));
       } else {
         notifyError(error);
       }
@@ -101,7 +109,14 @@ export function ProductDetailPage() {
   }
 
   const p = details.data.product;
+  const approval = details.data.approval;
   const site = me.sites.find((s) => s.id === p.siteId);
+  const validApprovals = details.data.signatures.filter(
+    (s) => s.status === 'VALID' && (s.meaning === 'REVIEWED' || s.meaning === 'APPROVED'),
+  );
+  const iAlreadySigned = validApprovals.some((s) => s.signerUserId === me.userId);
+  // with a double approval, the first signature means Reviewed and the second Approved
+  const nextMeaning = approval.required > 1 && approval.collected === 0 ? 'Reviewed' : 'Approved';
   const busy = submit.isPending || withReason.isPending || approve.isPending;
 
   const startApproval = () => {
@@ -112,7 +127,7 @@ export function ProductDetailPage() {
       comment: comment.trim(),
       createdAt: Date.now(),
     });
-    goToReauth('SIGN', `/products/${p.id}?signing=1`);
+    goToReauth('SIGN', `/products/${p.id}?signing=1`, { recordType: 'PRODUCT', recordId: p.id, recordVersion: p.version });
   };
 
   return (
@@ -151,10 +166,14 @@ export function ProductDetailPage() {
                       onClick={() => setReasonAction('reject')}>
                 Reject
               </Button>
-              <Button color="teal" leftSection={<IconSignature />} disabled={busy} loading={approve.isPending}
-                      onClick={() => setApproveOpen(true)}>
-                Approve
-              </Button>
+              <Tooltip label="You have already signed; a different approver must sign next" disabled={!iAlreadySigned}>
+                {/* data-disabled (not disabled) so the tooltip still gets hover events */}
+                <Button color="teal" leftSection={<IconSignature />} disabled={busy} loading={approve.isPending}
+                        data-disabled={iAlreadySigned || undefined}
+                        onClick={(e) => (iAlreadySigned ? e.preventDefault() : setApproveOpen(true))}>
+                  {nextMeaning === 'Reviewed' ? 'Review and sign' : 'Approve'}
+                </Button>
+              </Tooltip>
             </>
           )}
           {can('product.manage') && p.status !== 'RETIRED' && (
@@ -208,6 +227,11 @@ export function ProductDetailPage() {
             <IconSignature />
           </ThemeIcon>
           <Title order={5}>Electronic signatures</Title>
+          {p.status === 'IN_REVIEW' && approval.required > 1 && (
+            <Badge variant="light" color="teal" className="arq-pop">
+              {approval.collected} of {approval.required} approvals
+            </Badge>
+          )}
         </Group>
         {details.data.signatures.length === 0 ? (
           <Text size="sm" c="dimmed">
@@ -241,7 +265,8 @@ export function ProductDetailPage() {
       <Modal opened={approveOpen} onClose={() => setApproveOpen(false)} title={`Approve ${p.code}`} centered>
         <Stack>
           <Text size="sm">
-            You are signing this product electronically with the meaning <b>Approved</b>. Your signature is the
+            You are signing version {p.version} of this product electronically with the meaning <b>{nextMeaning}</b>.
+            {nextMeaning === 'Reviewed' && ' A second, different approver signs Approved afterwards.'} Your signature is the
             legally binding equivalent of a handwritten signature (21 CFR Part 11). To confirm it is you, you will be
             asked to sign in again.
           </Text>
@@ -257,7 +282,7 @@ export function ProductDetailPage() {
               Cancel
             </Button>
             <Button color="teal" leftSection={<IconSignature />} onClick={startApproval}>
-              Sign in again and approve
+              Sign in again and sign
             </Button>
           </Group>
         </Stack>

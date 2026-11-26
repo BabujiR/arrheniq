@@ -34,8 +34,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -70,6 +69,7 @@ class MasterDataIT extends PostgresIntegrationTest {
     private UUID site2;
     private Actor manager;      // STABILITY_MANAGER at S1
     private Actor approver;     // APPROVER_QA at S1
+    private Actor approver2;    // a second APPROVER_QA at S1 (double approval)
     private Actor both;         // STABILITY_MANAGER + APPROVER_QA at S1 (for segregation of duties)
     private Actor managerS2;    // STABILITY_MANAGER at S2 only
 
@@ -84,6 +84,7 @@ class MasterDataIT extends PostgresIntegrationTest {
         site2 = addSite("S2", "Second site");
         manager = actor("mgr", "Sam Manager", List.of(role("STABILITY_MANAGER", "S1")));
         approver = actor("qa", "Quinn Approver", List.of(role("APPROVER_QA", "S1")));
+        approver2 = actor("qa2", "Rae Reviewer", List.of(role("APPROVER_QA", "S1")));
         both = actor("both", "Bo Both", List.of(role("STABILITY_MANAGER", "S1"), role("APPROVER_QA", "S1")));
         managerS2 = actor("mgr2", "Max Manager", List.of(role("STABILITY_MANAGER", "S2")));
     }
@@ -160,7 +161,8 @@ class MasterDataIT extends PostgresIntegrationTest {
         assertEquals(401, noReauth.getResponse().getStatus());
         assertTrue(body(noReauth).contains("ARQ-AUTH-REAUTH"), body(noReauth));
 
-        SecurityTestSupport.grantSigningReauth(approver.session(), tenant, approver.id());
+        SecurityTestSupport.grantSigningReauth(approver.session(), tenant, approver.id(), "PRODUCT",
+                UUID.fromString(id), 1);
         MvcResult approved = send(approver, post("/api/v1/products/" + id + "/approve"), """
                 {"expectedVersion":1,"comment":"Reviewed against the dossier"}""");
         assertEquals(200, approved.getResponse().getStatus(), body(approved));
@@ -169,7 +171,7 @@ class MasterDataIT extends PostgresIntegrationTest {
                 && body(approved).contains("\"meaning\":\"APPROVED\"")
                 && body(approved).contains("\"status\":\"VALID\""), body(approved));
 
-        assertTrue(!SecurityTestSupport.hasSigningReauth(approver.session()), "re-authentication is single-use");
+        assertFalse(SecurityTestSupport.hasSigningReauth(approver.session()), "re-authentication is single-use");
 
         // editing the approved product needs a reason, supersedes the signature and returns it to DRAFT
         String edit = """
@@ -191,7 +193,7 @@ class MasterDataIT extends PostgresIntegrationTest {
     void theAuthorOrSubmitterCannotApprove() throws Exception {
         String id = createProduct(both, site1, "SOD-1");
         send(both, post("/api/v1/products/" + id + "/submit"), "{\"expectedVersion\":0}");
-        SecurityTestSupport.grantSigningReauth(both.session(), tenant, both.id());
+        SecurityTestSupport.grantSigningReauth(both.session(), tenant, both.id(), "PRODUCT", UUID.fromString(id), 1);
         MvcResult r = send(both, post("/api/v1/products/" + id + "/approve"), "{\"expectedVersion\":1}");
         assertEquals(403, r.getResponse().getStatus());
         assertTrue(body(r).contains("ARQ-SOD-001"), body(r));
@@ -210,11 +212,107 @@ class MasterDataIT extends PostgresIntegrationTest {
     }
 
     @Test
+    @Requirement({"URS-ESG-002", "URS-ESG-003"})
+    void aSignatureConfirmedForAnotherRecordOrVersionIsRefused() throws Exception {
+        String a = createProduct(manager, site1, "INT-A");
+        String b = createProduct(manager, site1, "INT-B");
+        send(manager, post("/api/v1/products/" + a + "/submit"), "{\"expectedVersion\":0}");
+        send(manager, post("/api/v1/products/" + b + "/submit"), "{\"expectedVersion\":0}");
+
+        // password entered to sign A, used to approve B
+        SecurityTestSupport.grantSigningReauth(approver.session(), tenant, approver.id(), "PRODUCT",
+                UUID.fromString(a), 1);
+        MvcResult wrongRecord = send(approver, post("/api/v1/products/" + b + "/approve"), "{\"expectedVersion\":1}");
+        assertEquals(409, wrongRecord.getResponse().getStatus(), body(wrongRecord));
+        assertTrue(body(wrongRecord).contains("ARQ-ESG-004"), body(wrongRecord));
+        assertFalse(SecurityTestSupport.hasSigningReauth(approver.session()), "the evidence is used up either way");
+
+        // password entered for an older version of A
+        SecurityTestSupport.grantSigningReauth(approver.session(), tenant, approver.id(), "PRODUCT",
+                UUID.fromString(a), 0);
+        assertEquals(409, send(approver, post("/api/v1/products/" + a + "/approve"), "{\"expectedVersion\":1}")
+                .getResponse().getStatus());
+
+        // nothing was signed or changed by the refused attempts
+        String stillB = body(call(approver, get("/api/v1/products/" + b)));
+        assertTrue(stillB.contains("\"status\":\"IN_REVIEW\"") && stillB.contains("\"signatures\":[]"), stillB);
+
+        SecurityTestSupport.grantSigningReauth(approver.session(), tenant, approver.id(), "PRODUCT",
+                UUID.fromString(a), 1);
+        MvcResult ok = send(approver, post("/api/v1/products/" + a + "/approve"), "{\"expectedVersion\":1}");
+        assertEquals(200, ok.getResponse().getStatus(), body(ok));
+        assertTrue(body(ok).contains("\"status\":\"APPROVED\""), body(ok));
+    }
+
+    @Test
+    @Requirement({"URS-MD-004", "URS-ESG-001", "URS-ESG-002"})
+    void doubleApprovalNeedsAReviewerAndADifferentApprover() throws Exception {
+        setTenantSetting("approval.product", "DOUBLE");
+        String id = createProduct(manager, site1, "DBL-1");
+        UUID pid = UUID.fromString(id);
+        send(manager, post("/api/v1/products/" + id + "/submit"), "{\"expectedVersion\":0}");
+
+        SecurityTestSupport.grantSigningReauth(approver.session(), tenant, approver.id(), "PRODUCT", pid, 1);
+        MvcResult first = send(approver, post("/api/v1/products/" + id + "/approve"), "{\"expectedVersion\":1}");
+        assertEquals(200, first.getResponse().getStatus(), body(first));
+        assertTrue(body(first).contains("\"status\":\"IN_REVIEW\"") && body(first).contains("\"meaning\":\"REVIEWED\"")
+                && body(first).contains("\"approval\":{\"level\":\"DOUBLE\",\"required\":2,\"collected\":1}"),
+                body(first));
+
+        SecurityTestSupport.grantSigningReauth(approver.session(), tenant, approver.id(), "PRODUCT", pid, 1);
+        MvcResult again = send(approver, post("/api/v1/products/" + id + "/approve"), "{\"expectedVersion\":1}");
+        assertEquals(403, again.getResponse().getStatus(), body(again));
+        assertTrue(body(again).contains("ARQ-SOD-002"), body(again));
+
+        SecurityTestSupport.grantSigningReauth(approver2.session(), tenant, approver2.id(), "PRODUCT", pid, 1);
+        MvcResult second = send(approver2, post("/api/v1/products/" + id + "/approve"), "{\"expectedVersion\":1}");
+        assertEquals(200, second.getResponse().getStatus(), body(second));
+        assertTrue(body(second).contains("\"status\":\"APPROVED\"") && body(second).contains("\"signerName\":\"Rae Reviewer\"")
+                && body(second).contains("\"collected\":2"), body(second));
+
+        assertEquals(List.of("CREATE", "SUBMIT", "SIGN", "SIGN", "APPROVE"), actions(auditTrail("PRODUCT", pid)));
+    }
+
+    @Test
+    @Requirement({"URS-MD-004", "URS-ESG-003"})
+    void rejectingAfterTheFirstOfTwoSignaturesSupersedesIt() throws Exception {
+        setTenantSetting("approval.product", "DOUBLE");
+        String id = createProduct(manager, site1, "DBL-2");
+        UUID pid = UUID.fromString(id);
+        send(manager, post("/api/v1/products/" + id + "/submit"), "{\"expectedVersion\":0}");
+        SecurityTestSupport.grantSigningReauth(approver.session(), tenant, approver.id(), "PRODUCT", pid, 1);
+        assertEquals(200, send(approver, post("/api/v1/products/" + id + "/approve"), "{\"expectedVersion\":1}")
+                .getResponse().getStatus());
+
+        MvcResult rejected = send(approver2, post("/api/v1/products/" + id + "/reject"),
+                "{\"expectedVersion\":1,\"reason\":\"Strength must state the salt form\"}");
+        assertEquals(200, rejected.getResponse().getStatus(), body(rejected));
+        assertTrue(body(rejected).contains("\"status\":\"DRAFT\"") && body(rejected).contains("\"status\":\"SUPERSEDED\"")
+                && body(rejected).contains("\"collected\":0"), body(rejected));
+        assertEquals(List.of("CREATE", "SUBMIT", "SIGN", "REJECT", "SIGNATURE_SUPERSEDE"),
+                actions(auditTrail("PRODUCT", pid)));
+    }
+
+    @Test
+    @Requirement("URS-MD-004")
+    void withNoApprovalConfiguredSubmittingMakesTheProductEffective() throws Exception {
+        setTenantSetting("approval.product", "NONE");
+        String id = createProduct(manager, site1, "NOAPP-1");
+        MvcResult submitted = send(manager, post("/api/v1/products/" + id + "/submit"), "{\"expectedVersion\":0}");
+        assertEquals(200, submitted.getResponse().getStatus(), body(submitted));
+        assertTrue(body(submitted).contains("\"status\":\"APPROVED\"") && body(submitted).contains("\"signatures\":[]"),
+                body(submitted));
+        assertEquals(List.of("CREATE", "SUBMIT", "APPROVE"), actions(auditTrail("PRODUCT", UUID.fromString(id))));
+        assertEquals(409, send(approver, post("/api/v1/products/" + id + "/approve"), "{\"expectedVersion\":2}")
+                .getResponse().getStatus(), "nothing left to approve");
+    }
+
+    @Test
     void productsOfOtherSitesAreInvisible() throws Exception {
         String other = createProduct(managerS2, site2, "S2-ONLY");
         assertEquals(404, call(manager, get("/api/v1/products/" + other)).getResponse().getStatus());
         String list = body(call(manager, get("/api/v1/products")));
-        assertTrue(!list.contains("S2-ONLY"), list);
+        assertFalse(list.contains("S2-ONLY"), list);
         assertEquals(403, send(manager, post("/api/v1/products"), productJson(site2, "S2-NOPE"))
                 .getResponse().getStatus(), "creating at a site without product.manage there");
     }
@@ -259,7 +357,7 @@ class MasterDataIT extends PostgresIntegrationTest {
         MockHttpSession session = SecurityTestSupport.activeSession();
         Cookie xsrf = mvc.perform(get("/api/v1/me").with(authentication(auth)).session(session))
                 .andReturn().getResponse().getCookie("XSRF-TOKEN");
-        assertTrue(xsrf != null, "CSRF cookie");
+        assertNotNull(xsrf, "CSRF cookie");
         return new Actor(id, auth, session, xsrf);
     }
 
@@ -292,6 +390,18 @@ class MasterDataIT extends PostgresIntegrationTest {
             c.commit();
         }
         return id;
+    }
+
+    /** Sets a tenant-wide setting (as the future settings screen will), e.g. approval.product = DOUBLE. */
+    private void setTenantSetting(String key, String value) throws SQLException {
+        try (Connection c = tenantOwnerConnection();
+             PreparedStatement u = c.prepareStatement("UPDATE app.tenant_setting SET value = to_jsonb(?::text),"
+                     + " version = version + 1 WHERE setting_key = ? AND site_id IS NULL AND deleted_at IS NULL")) {
+            u.setString(1, value);
+            u.setString(2, key);
+            assertEquals(1, u.executeUpdate(), "setting " + key + " must exist (V11 seeds it)");
+            c.commit();
+        }
     }
 
     /** Audit events (action + changes JSON) of one record, in order. */

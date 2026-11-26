@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Clock;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Browser entry points of the BFF login (ADR 0006). Tokens never reach the browser; these endpoints
@@ -45,11 +46,16 @@ public class AuthController {
     /**
      * Starts re-authentication for an e-signature ({@code purpose=SIGN}) or to unlock an idle-locked
      * session ({@code purpose=UNLOCK}). Requires a signed-in user (enforced by the filter chain).
+     * For SIGN the caller names what will be signed ({@code recordType}, {@code recordId}, {@code recordVersion});
+     * the resulting evidence can sign only that record version ({@link SigningIntent}).
      */
     @AuthenticatedOnly
     @GetMapping("/auth/reauth")
     public ResponseEntity<Void> reauth(@RequestParam(name = "purpose", defaultValue = "SIGN") String purpose,
                                        @RequestParam(name = "returnTo", required = false) @Nullable String returnTo,
+                                       @RequestParam(name = "recordType", required = false) @Nullable String recordType,
+                                       @RequestParam(name = "recordId", required = false) @Nullable String recordId,
+                                       @RequestParam(name = "recordVersion", required = false) @Nullable String recordVersion,
                                        HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -57,13 +63,21 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         ReauthRequest.Purpose p;
+        SigningIntent intent = null;
         try {
             p = ReauthRequest.Purpose.valueOf(purpose.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
+            if (p == ReauthRequest.Purpose.SIGN) {
+                if (recordType == null || recordId == null || recordVersion == null) {
+                    return ResponseEntity.badRequest().build();
+                }
+                intent = new SigningIntent(UUID.randomUUID(), recordType, UUID.fromString(recordId),
+                        Long.parseLong(recordVersion));
+            }
+        } catch (IllegalArgumentException e) {   // also NumberFormatException
             return ResponseEntity.badRequest().build();
         }
         session.setAttribute(SessionKeys.PENDING_REAUTH, new ReauthRequest(user.tenantId(), user.userId(), p,
-                clock.instant(), SafeRedirects.orDefault(returnTo, props.postLoginPath())));
+                clock.instant(), SafeRedirects.orDefault(returnTo, props.postLoginPath()), intent));
         session.removeAttribute(SessionKeys.REAUTH_EVIDENCE);
         return redirect(request.getContextPath() + "/oauth2/authorization/" + props.registrationId()
                 + "?" + ReauthAuthorizationRequestCustomizer.REAUTH_PARAM + "=1");

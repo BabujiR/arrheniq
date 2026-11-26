@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SessionAndReauthPolicyTest {
@@ -18,6 +19,7 @@ class SessionAndReauthPolicyTest {
     private static final Duration ABS = Duration.ofHours(12);
     private static final UUID TENANT = UUID.randomUUID();
     private static final UUID USER = UUID.randomUUID();
+    private static final SigningIntent INTENT = new SigningIntent(UUID.randomUUID(), "PRODUCT", UUID.randomUUID(), 1);
 
     @Test
     @Requirement("URS-IAM-004")
@@ -47,7 +49,7 @@ class SessionAndReauthPolicyTest {
     @Test
     @Requirement("URS-ESG-002")
     void reauthMustBeSameUserWithFreshAuthTime() {
-        ReauthRequest req = new ReauthRequest(TENANT, USER, ReauthRequest.Purpose.SIGN, LOGIN, "/studies/1");
+        ReauthRequest req = new ReauthRequest(TENANT, USER, ReauthRequest.Purpose.SIGN, LOGIN, "/studies/1", INTENT);
         Duration flow = Duration.ofMinutes(10);
         assertEquals(ReauthPolicy.Verdict.OK,
                 ReauthPolicy.verifyCallback(req, TENANT, USER, LOGIN.plusSeconds(20), LOGIN.plusSeconds(21), flow));
@@ -67,12 +69,34 @@ class SessionAndReauthPolicyTest {
     @Test
     @Requirement("URS-ESG-002")
     void evidenceIsUsableOnlyForSameUserPurposeAndWithinMaxAge() {
-        ReauthEvidence ev = new ReauthEvidence(TENANT, USER, ReauthRequest.Purpose.SIGN, LOGIN, LOGIN.plusSeconds(1));
+        ReauthEvidence ev = new ReauthEvidence(TENANT, USER, ReauthRequest.Purpose.SIGN, LOGIN, LOGIN.plusSeconds(1),
+                INTENT);
         Duration maxAge = Duration.ofMinutes(5);
         assertTrue(ReauthPolicy.isUsable(ev, TENANT, USER, ReauthRequest.Purpose.SIGN, LOGIN.plusSeconds(299), maxAge));
         assertFalse(ReauthPolicy.isUsable(ev, TENANT, USER, ReauthRequest.Purpose.SIGN, LOGIN.plusSeconds(301), maxAge));
         assertFalse(ReauthPolicy.isUsable(ev, TENANT, USER, ReauthRequest.Purpose.UNLOCK, LOGIN.plusSeconds(10), maxAge));
         assertFalse(ReauthPolicy.isUsable(ev, TENANT, UUID.randomUUID(), ReauthRequest.Purpose.SIGN, LOGIN.plusSeconds(10), maxAge));
         assertFalse(ReauthPolicy.isUsable(null, TENANT, USER, ReauthRequest.Purpose.SIGN, LOGIN, maxAge));
+    }
+
+    @Test
+    @Requirement("URS-ESG-002")
+    void aSignatureReauthenticationNamesExactlyOneRecordVersion() {
+        UUID product = UUID.randomUUID();
+        SigningIntent intent = new SigningIntent(UUID.randomUUID(), "PRODUCT", product, 3);
+        assertTrue(intent.covers("PRODUCT", product, 3));
+        assertFalse(intent.covers("PRODUCT", product, 4), "another version of the same record");
+        assertFalse(intent.covers("PRODUCT", UUID.randomUUID(), 3), "another record");
+        assertFalse(intent.covers("SPECIFICATION", product, 3), "another record type");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new ReauthRequest(TENANT, USER, ReauthRequest.Purpose.SIGN, LOGIN, "/", null),
+                "SIGN without an intent");
+        assertThrows(IllegalArgumentException.class,
+                () -> new ReauthRequest(TENANT, USER, ReauthRequest.Purpose.UNLOCK, LOGIN, "/", intent),
+                "UNLOCK with an intent");
+        assertThrows(IllegalArgumentException.class,
+                () -> new SigningIntent(UUID.randomUUID(), "product; drop", product, 1));
+        assertThrows(IllegalArgumentException.class, () -> new SigningIntent(UUID.randomUUID(), "PRODUCT", product, -1));
     }
 }
