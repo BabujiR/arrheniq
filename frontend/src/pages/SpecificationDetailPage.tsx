@@ -294,7 +294,7 @@ export function SpecificationDetailPage() {
         )}
       </Group>
 
-      <Grid gutter="md">
+      <Grid>
         <Grid.Col span={{ base: 12, md: 3 }}>
           <Card withBorder radius="md" className="arq-fade-in">
             <Text size="xs" c="dimmed" fw={600} tt="uppercase" mb="xs" style={{ letterSpacing: '0.05em' }}>
