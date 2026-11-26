@@ -168,19 +168,31 @@ export function DictionaryValueForm({ opened, list, existing, canManage, onClose
           {list.systemManaged && (
             <Alert color="gray">The values of this list are managed by ArrheniQ and can't be changed.</Alert>
           )}
+          {!canManage && !list.systemManaged && (
+            <Alert color="gray" variant="light">
+              You can view this list. Changing it needs the “Maintain lists” permission (e.g. stability manager).
+            </Alert>
+          )}
           {existing?.inUse && !readOnly && (
             <Alert color="arqIndigo" variant="light">
               Records use this value. Changes show on all of them, so you'll be asked for a reason.
             </Alert>
           )}
-          <Group grow align="flex-start">
+          <Group grow align="flex-end">
             <TextInput
               label="Code"
               description={existing ? 'Fixed: records refer to the code' : 'A-Z, 0-9, . _ / - (e.g. 25C60RH)'}
               disabled={!!existing || readOnly}
               {...form.getInputProps('code')}
             />
-            <NumberInput label="Sort order" min={0} max={100000} disabled={readOnly} {...form.getInputProps('sortOrder')} />
+            <NumberInput
+              label="Sort order"
+              description="Lower numbers are listed first"
+              min={0}
+              max={100000}
+              disabled={readOnly}
+              {...form.getInputProps('sortOrder')}
+            />
           </Group>
           <TextInput label="Label" withAsterisk disabled={readOnly} {...form.getInputProps('label')} />
           <Textarea label="Description" autosize minRows={2} disabled={readOnly} {...form.getInputProps('description')} />
