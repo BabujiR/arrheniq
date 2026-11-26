@@ -13,6 +13,9 @@ public final class Requests {
     public record ProductUpdate(@Nullable Long expectedVersion, @Nullable String reason,
                                 @Nullable ProductInput data) { }
 
+    public record DictionaryValueUpdate(@Nullable Long expectedVersion, @Nullable String reason,
+                                        @Nullable DictionaryValueInput data) { }
+
     /** Submit / reject / retire: reason required for reject and retire (ReasonPolicy). */
     public record StatusChange(@Nullable Long expectedVersion, @Nullable String reason) { }
 

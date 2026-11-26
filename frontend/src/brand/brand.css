@@ -164,6 +164,14 @@
 .arq-hover-icon:hover .arq-icon--test .bubble {
   animation: arq-bubble 0.9s ease-out infinite;
 }
+.arq-icon--list .lines {
+  transition: transform 220ms ease;
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+.arq-hover-icon:hover .arq-icon--list .lines {
+  transform: scaleX(0.8);
+}
 .arq-hover-icon:hover .arq-icon--plus,
 .arq-icon--plus:hover {
   transform: rotate(90deg);
