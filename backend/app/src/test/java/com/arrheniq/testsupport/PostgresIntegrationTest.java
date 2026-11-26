@@ -84,15 +84,27 @@ public abstract class PostgresIntegrationTest {
 
     /** Provisions a tenant the way the platform console will (platform role, V11 function). */
     protected static UUID provisionTenant(String slug) throws SQLException {
+        return provisionTenant(slug, slug + "-" + UUID.randomUUID().toString().substring(0, 8));
+    }
+
+    /**
+     * Same, with an exact slug (for tests that resolve the tenant by slug, e.g. a fixed-tenant install).
+     * {@code displayName} doubles as the legal-name prefix.
+     */
+    protected static UUID provisionTenantWithSlug(String exactSlug) throws SQLException {
+        return provisionTenant(exactSlug, exactSlug);
+    }
+
+    private static UUID provisionTenant(String displayName, String slug) throws SQLException {
         UUID tenant = UUID.randomUUID();
         try (Connection c = DriverManager.getConnection(jdbcUrl("arrheniq"), "arrheniq_platform", PLATFORM_PW);
              PreparedStatement ps = c.prepareStatement(
                      "SELECT platform.provision_tenant(?, ?, ?, ?, 'S1', 'Main site', 'America/New_York',"
                              + " 'PROFESSIONAL', 'it@arrheniq', false)")) {
             ps.setObject(1, tenant);
-            ps.setString(2, slug + "-" + tenant.toString().substring(0, 8));
-            ps.setString(3, slug + " Inc.");
-            ps.setString(4, slug);
+            ps.setString(2, slug);
+            ps.setString(3, displayName + " Inc.");
+            ps.setString(4, displayName);
             ps.execute();
         }
         return tenant;

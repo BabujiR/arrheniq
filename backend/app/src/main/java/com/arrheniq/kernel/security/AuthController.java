@@ -32,6 +32,7 @@ public class AuthController {
     }
 
     /** Starts login; remembers a safe return path. */
+    @PublicEndpoint
     @GetMapping("/auth/login")
     public ResponseEntity<Void> login(@RequestParam(name = "returnTo", required = false) @Nullable String returnTo,
                                       HttpServletRequest request) {
@@ -69,6 +70,7 @@ public class AuthController {
     }
 
     /** Landing page after logout or a failed login; the SPA shows the message. */
+    @PublicEndpoint
     @GetMapping("/auth/signed-out")
     public Map<String, String> signedOut(@RequestParam(name = "error", required = false) @Nullable String error) {
         String status = "login".equals(error) || "reauth".equals(error) ? error + "_failed" : "signed_out";

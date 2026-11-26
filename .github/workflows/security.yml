@@ -98,3 +98,14 @@ jobs:
       - uses: github/codeql-action/analyze@v3
         with:
           category: "/language:java"
+
+  # ---------------------------------------------------------------- BOM security overrides (both)
+  bom-pins:
+    name: Spring Boot BOM security overrides
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check pins in backend/pom.xml (remove when the BOM catches up; notice when a newer fix exists)
+        run: python3 scripts/ci/check_bom_pins.py backend/pom.xml | tee -a "$GITHUB_STEP_SUMMARY"
+        shell: bash

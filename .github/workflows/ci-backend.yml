@@ -1,16 +1,20 @@
 # Backend CI: Maven build, unit tests (Surefire) and integration tests (Failsafe + Testcontainers).
-# Plan: docs/ci/README.md (stage C1). Traces: URS-VAL-001 (test evidence), ADR 0015, ADR 0017.
+# Plan: docs/ci/README.md (stages C1 and C7). Traces: URS-VAL-001 (test evidence), ADR 0015, ADR 0017.
 name: ci-backend
 
 on:
   pull_request:
     paths:
       - "backend/**"
+      - "docs/validation/**"
+      - "scripts/ci/traceability.py"
       - ".github/workflows/ci-backend.yml"
   push:
     branches: [main]
     paths:
       - "backend/**"
+      - "docs/validation/**"
+      - "scripts/ci/traceability.py"
       - ".github/workflows/ci-backend.yml"
   workflow_dispatch:
 
@@ -52,5 +56,25 @@ jobs:
           path: |
             backend/**/target/surefire-reports/
             backend/**/target/failsafe-reports/
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Traceability matrix (URS → test → result)
+        # Fails on unknown requirement IDs or failing linked tests. Add --require-mvp at MVP (release gate).
+        if: always()
+        working-directory: .
+        run: |
+          set +e
+          python3 scripts/ci/traceability.py --out backend/target/traceability
+          code=$?
+          cat backend/target/traceability/traceability.md >> "$GITHUB_STEP_SUMMARY"
+          exit $code
+
+      - name: Upload traceability matrix (OQ evidence)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: traceability-${{ github.run_number }}
+          path: backend/target/traceability/
           retention-days: 90
           if-no-files-found: warn
