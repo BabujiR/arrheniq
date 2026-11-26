@@ -133,7 +133,7 @@ public class SignatureService {
                  ORDER BY s.signed_at DESC
                 """)
             .params(recordType, recordId)
-            .query((rs, n) -> new Signature(rs.getObject("id", UUID.class), rs.getString("meaning"),
+            .query((rs, _) -> new Signature(rs.getObject("id", UUID.class), rs.getString("meaning"),
                     rs.getObject("signer_user_id", UUID.class), rs.getString("signer_name"),
                     rs.getObject("signed_at", OffsetDateTime.class).toInstant(), rs.getLong("record_version"),
                     rs.getString("status"), rs.getString("comment")))

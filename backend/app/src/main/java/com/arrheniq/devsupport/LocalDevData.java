@@ -68,7 +68,7 @@ class LocalDevData implements ApplicationRunner {
     }
 
     private void provisionIfMissing(UUID id, String slug, String legal, String display, String site, String siteName) {
-        Boolean exists = jdbc.sql("SELECT EXISTS (SELECT 1 FROM platform.tenant WHERE id = ?)")
+        boolean exists = jdbc.sql("SELECT EXISTS (SELECT 1 FROM platform.tenant WHERE id = ?)")
                 .param(id).query(Boolean.class).single();
         if (exists) {
             return;
@@ -79,14 +79,14 @@ class LocalDevData implements ApplicationRunner {
                 .sql("SELECT platform.provision_tenant(?, ?, ?, ?, ?, ?, 'America/New_York', 'PROFESSIONAL',"
                         + " 'local-dev-data', true)")
                 .params(id, slug, legal, display, site, siteName)
-                .query((rs, n) -> 1)
+                .query((_, _) -> 1)
                 .single();
         LOG.info("Local dev tenant provisioned: {}", slug);
     }
 
     private void inviteIfMissing(UUID tenant, Invitation invitation) {
-        TenantContextHolder.runAs(TenantContext.system(tenant), () -> tx.executeWithoutResult(status -> {
-            Boolean exists = jdbc.sql("SELECT EXISTS (SELECT 1 FROM app.app_user WHERE username = ?)")
+        TenantContextHolder.runAs(TenantContext.system(tenant), () -> tx.executeWithoutResult(_ -> {
+            boolean exists = jdbc.sql("SELECT EXISTS (SELECT 1 FROM app.app_user WHERE username = ?)")
                     .param(invitation.username()).query(Boolean.class).single();
             if (!exists) {
                 audit.open("devdata.invite");

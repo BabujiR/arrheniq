@@ -346,7 +346,7 @@ class MasterDataIT extends PostgresIntegrationTest {
             throws Exception {
         String subject = "sub-" + UUID.randomUUID();
         TransactionTemplate tx = new TransactionTemplate(txManager);
-        UUID id = TenantContextHolder.callAs(TenantContext.system(tenant), () -> tx.execute(s -> {
+        UUID id = TenantContextHolder.callAs(TenantContext.system(tenant), () -> tx.execute(_ -> {
             audit.open("it.invite");
             UUID uid = invitations.invite(AuditActor.system("it"), new UserInvitationService.Invitation(
                     username, username + "@md.test", name, roles));

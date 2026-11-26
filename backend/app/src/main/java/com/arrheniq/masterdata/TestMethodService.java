@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -33,7 +34,7 @@ public class TestMethodService {
             default_lower_limit, default_upper_limit, default_text_limit, default_alert_lower, default_alert_upper,
             default_variance_lower_pct, default_variance_upper_pct, trendable, status, created_at, updated_at""";
 
-    private static final RowMapper<TestMethod> ROW = (rs, n) -> new TestMethod(
+    private static final RowMapper<TestMethod> ROW = (rs, _) -> new TestMethod(
             rs.getObject("id", UUID.class), rs.getLong("version"), rs.getString("code"), rs.getString("name"),
             rs.getString("method_reference"), rs.getString("lab_number"), rs.getString("results_format"),
             rs.getString("unit_code"), rs.getInt("replicates"), rs.getObject("decimals", Integer.class),
@@ -92,10 +93,11 @@ public class TestMethodService {
                     default_variance_upper_pct, trendable)
                 VALUES (app.current_tenant(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """)
-            .params(id, CurrentUserHolder.require().userId(), c.code(), c.name(), c.methodReference(), c.labNumber(),
-                    c.resultsFormat(), c.unitCode(), c.replicates(), c.decimals(), c.defaultLowerLimit(),
+            // as a list: optional fields are stored as NULL (JdbcClient's varargs are declared non-null)
+            .params(Arrays.asList(id, CurrentUserHolder.require().userId(), c.code(), c.name(), c.methodReference(),
+                    c.labNumber(), c.resultsFormat(), c.unitCode(), c.replicates(), c.decimals(), c.defaultLowerLimit(),
                     c.defaultUpperLimit(), c.defaultTextLimit(), c.defaultAlertLower(), c.defaultAlertUpper(),
-                    c.defaultVarianceLowerPct(), c.defaultVarianceUpperPct(), c.trendable())
+                    c.defaultVarianceLowerPct(), c.defaultVarianceUpperPct(), c.trendable()))
             .update();
         audit.record(MasterDataSupport.actor(), new AuditEventDraft("CREATE", RECORD_TYPE, id, 0L, c.code(), null,
                 FieldDiff.between(null, TestMethod.auditMap(c, "ACTIVE")), null, null, null));
@@ -126,11 +128,12 @@ public class TestMethodService {
                     version = version + 1, updated_at = clock_timestamp(), updated_by = ?
                  WHERE id = ? AND version = ?
                 """)
-            .params(c.code(), c.name(), c.methodReference(), c.labNumber(), c.resultsFormat(), c.unitCode(),
-                    c.replicates(), c.decimals(), c.defaultLowerLimit(), c.defaultUpperLimit(), c.defaultTextLimit(),
-                    c.defaultAlertLower(), c.defaultAlertUpper(), c.defaultVarianceLowerPct(),
+            // as a list: optional fields are stored as NULL (JdbcClient's varargs are declared non-null)
+            .params(Arrays.asList(c.code(), c.name(), c.methodReference(), c.labNumber(), c.resultsFormat(),
+                    c.unitCode(), c.replicates(), c.decimals(), c.defaultLowerLimit(), c.defaultUpperLimit(),
+                    c.defaultTextLimit(), c.defaultAlertLower(), c.defaultAlertUpper(), c.defaultVarianceLowerPct(),
                     c.defaultVarianceUpperPct(), c.trendable(), CurrentUserHolder.require().userId(), id,
-                    expectedVersion)
+                    expectedVersion))
             .update();
         if (n != 1) {
             throw ApiException.versionConflict();
@@ -178,12 +181,12 @@ public class TestMethodService {
     }
 
     private void requireUniqueCode(String code, @Nullable UUID exceptId) {
-        Boolean taken = jdbc.sql("SELECT EXISTS (SELECT 1 FROM app.test_method WHERE code = ?"
+        boolean taken = jdbc.sql("SELECT EXISTS (SELECT 1 FROM app.test_method WHERE code = ?"
                         + (exceptId == null ? ")" : " AND id <> ?)"))
                 .params(exceptId == null ? List.of(code) : List.of(code, exceptId))
                 .query(Boolean.class)
                 .single();
-        if (Boolean.TRUE.equals(taken)) {
+        if (taken) {
             throw ApiException.duplicate("code", code);
         }
     }

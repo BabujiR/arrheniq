@@ -1,5 +1,6 @@
 package com.arrheniq.kernel.security;
 
+import org.jspecify.annotations.Nullable;
 import com.arrheniq.kernel.audit.AuditActor;
 import com.arrheniq.kernel.audit.FieldChange;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,35 +55,37 @@ public class ArrheniqOidcUserService implements OAuth2UserService<OidcUserReques
         HttpServletRequest http = currentRequest();
         ResolvedTenant tenant = tenants.resolve(http).orElseThrow(() -> fail(ACCESS_DENIED));
 
-        String issuer = idp.getIdToken().getIssuer().toString();
-        String subject = idp.getSubject();
+        // Spring Security already validated iss; a token without it is refused like any other denial
+        String issuer = Optional.ofNullable(idp.getIdToken().getIssuer()).map(Object::toString)
+                .orElseThrow(() -> fail(ACCESS_DENIED));
+        String subject = Optional.ofNullable(idp.getSubject()).orElseThrow(() -> fail(ACCESS_DENIED));
         String idpName = Optional.ofNullable(idp.getPreferredUsername()).orElse(subject);
         boolean emailVerified = Boolean.TRUE.equals(idp.getEmailVerified());
 
-        record Lookup(LoginDecision decision, LoginDecision.UserRecord user) { }
+        /* The decision and the user it is about (none when the IdP identity matches no ArrheniQ user). */
+        record Lookup(LoginDecision decision, LoginDecision.@Nullable UserRecord user) { }
         Lookup lookup = auditor.inTenantTransaction(tenant.id(), "security.login", () -> {
             Optional<LoginDecision.UserRecord> bySubject = users.findBySubject(issuer, subject);
             Optional<LoginDecision.UserRecord> invitation = bySubject.isPresent()
                     ? Optional.empty() : users.findInvitationByEmail(idp.getEmail());
             LoginDecision d = LoginDecision.decide(tenant.status(), bySubject, invitation, emailVerified);
-            LoginDecision.UserRecord u = bySubject.or(() -> invitation).orElse(null);
-            if (d.outcome() == LoginDecision.Outcome.LINK_INVITATION) {
-                users.linkInvitation(u, issuer, subject);
+            if (d.outcome() == LoginDecision.Outcome.LINK_INVITATION) {   // only decided when there is an invitation
+                users.linkInvitation(invitation.orElseThrow(), issuer, subject);
             }
-            return new Lookup(d, u);
+            return new Lookup(d, bySubject.or(() -> invitation).orElse(null));
         });
 
-        if (!lookup.decision().allowed()) {
-            AuditActor actor = lookup.user() != null
-                    ? new AuditActor(lookup.user().id(), lookup.user().displayName(), AuditActor.Type.USER)
+        LoginDecision.UserRecord user = lookup.user();
+        if (!lookup.decision().allowed() || user == null) {
+            AuditActor actor = user != null
+                    ? new AuditActor(user.id(), user.displayName(), AuditActor.Type.USER)
                     : new AuditActor(null, "idp:" + idpName, AuditActor.Type.SYSTEM);
+            LoginDecision.DenyReason reason = lookup.decision().denyReason();
             auditor.record(tenant.id(), actor, "LOGIN_FAILURE", lookup.decision().userId(), idpName,
-                    List.of(new FieldChange("reason", null, lookup.decision().denyReason().name()),
+                    List.of(new FieldChange("reason", null, reason != null ? reason.name() : "UNKNOWN_USER"),
                             new FieldChange("idpIssuer", null, issuer)));
             throw fail(ACCESS_DENIED);
         }
-
-        LoginDecision.UserRecord user = lookup.user();
         verifyReauthIfPending(http, tenant, user, idp);
 
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();

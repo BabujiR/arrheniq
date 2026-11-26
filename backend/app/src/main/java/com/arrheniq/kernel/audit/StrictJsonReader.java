@@ -25,7 +25,7 @@ public final class StrictJsonReader {
     public static @Nullable Object read(String json) {
         StrictJsonReader r = new StrictJsonReader(json);
         r.skipWs();
-        @Nullable Object v = r.value();
+        Object v = r.value();
         r.skipWs();
         if (r.pos != r.s.length()) {
             throw r.error("trailing content");

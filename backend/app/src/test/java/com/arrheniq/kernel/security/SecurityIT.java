@@ -69,7 +69,7 @@ class SecurityIT extends PostgresIntegrationTest {
         tenant = provisionTenant("sec");
         subject = "sub-" + UUID.randomUUID();
         TransactionTemplate tx = new TransactionTemplate(txManager);
-        userId = TenantContextHolder.callAs(TenantContext.system(tenant), () -> tx.execute(s -> {
+        userId = TenantContextHolder.callAs(TenantContext.system(tenant), () -> tx.execute(_ -> {
             audit.open("it.invite");
             UUID id = invitations.invite(AuditActor.system("it"), new UserInvitationService.Invitation(
                     "smanager", "smanager@sec.test", "Sam Manager",

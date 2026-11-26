@@ -47,7 +47,7 @@ public class ProductService {
             expiration_value, expiration_unit, controlled_substance, status, created_by, updated_by, created_at,
             updated_at""";
 
-    private static final RowMapper<Product> ROW = (rs, n) -> new Product(
+    private static final RowMapper<Product> ROW = (rs, _) -> new Product(
             rs.getObject("id", UUID.class), rs.getLong("version"), rs.getObject("site_id", UUID.class),
             rs.getString("code"), rs.getString("name"), rs.getString("description"), rs.getString("product_type"),
             rs.getString("dosage_form"), rs.getString("strength"), rs.getString("expiration_status"),

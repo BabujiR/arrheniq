@@ -25,7 +25,7 @@ public class UserDirectory {
     /** Issuer placeholder for users who were invited but never logged in. */
     public static final String INVITATION_ISSUER = "urn:arrheniq:invitation";
 
-    private static final RowMapper<LoginDecision.UserRecord> USER = (rs, n) -> new LoginDecision.UserRecord(
+    private static final RowMapper<LoginDecision.UserRecord> USER = (rs, _) -> new LoginDecision.UserRecord(
             rs.getObject("id", UUID.class), rs.getString("username"), rs.getString("email"),
             rs.getString("display_name"), rs.getString("status"));
 
@@ -68,7 +68,7 @@ public class UserDirectory {
                 .params(email.trim(), INVITATION_ISSUER)
                 .query(USER)
                 .list();
-        return found.size() == 1 ? Optional.of(found.get(0)) : Optional.empty();
+        return found.size() == 1 ? Optional.of(found.getFirst()) : Optional.empty();
     }
 
     /** First login of an invited user: bind the IdP identity and activate (audited, URS-IAM-007). */

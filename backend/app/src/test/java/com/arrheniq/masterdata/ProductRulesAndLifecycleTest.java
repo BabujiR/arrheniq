@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -75,7 +76,7 @@ class ProductRulesAndLifecycleTest {
         assertTrue(java.util.Arrays.equals(reviewed, again), "same content, same hash");
         byte[] changed = com.arrheniq.kernel.esign.RecordHasher.contentHash(Product.businessContent(id,
                 ProductRules.validate(product(null, 36, "MONTH"))));
-        assertTrue(!java.util.Arrays.equals(reviewed, changed), "a business change must change the hash");
-        assertTrue(!Product.businessContent(id, c).containsKey("status"));
+        assertFalse(java.util.Arrays.equals(reviewed, changed), "a business change must change the hash");
+        assertFalse(Product.businessContent(id, c).containsKey("status"));
     }
 }

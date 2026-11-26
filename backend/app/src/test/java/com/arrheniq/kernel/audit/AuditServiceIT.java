@@ -58,7 +58,7 @@ class AuditServiceIT extends PostgresIntegrationTest {
 
     @Test
     void appendedEventsFormAVerifiableChainFromTheDatabaseGenesis() {
-        inTenant(tenantA, () -> tx.execute(s -> {
+        inTenant(tenantA, () -> tx.execute(_ -> {
             audit.open("product.update");
             audit.record(SAM, productUpdate(null, "Metformin HCl ER 500 mg — \"Ü\""));
             audit.record(SAM, productUpdate(null, "Metformin HCl ER 750 mg"));
@@ -75,7 +75,7 @@ class AuditServiceIT extends PostgresIntegrationTest {
 
     @Test
     void tenantsHaveSeparateChainsAndCannotSeeEachOther() {
-        inTenant(tenantA, () -> tx.execute(s -> {
+        inTenant(tenantA, () -> tx.execute(_ -> {
             audit.open("product.update");
             return audit.record(SAM, productUpdate(null, "A"));
         }));
@@ -93,13 +93,13 @@ class AuditServiceIT extends PostgresIntegrationTest {
     @Test
     void recordingRequiresAnOpenedAuditContext() {
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> inTenant(tenantA,
-                () -> tx.execute(s -> audit.record(SAM, productUpdate(null, "x")))));
+                () -> tx.execute(_ -> audit.record(SAM, productUpdate(null, "x")))));
         assertTrue(e.getMessage().contains("ARQ-AUDIT-011"), e.getMessage());
     }
 
     @Test
     void missingReasonOnLockedRecordIsRejectedAndNothingIsWritten() {
-        assertThrows(ReasonRequiredException.class, () -> inTenant(tenantA, () -> tx.execute(s -> {
+        assertThrows(ReasonRequiredException.class, () -> inTenant(tenantA, () -> tx.execute(_ -> {
             audit.open("product.update");
             return audit.record(SAM, new AuditEventDraft("UPDATE", "PRODUCT", UUID.randomUUID(), 2L, "P-001", null,
                     List.of(new FieldChange("name", "a", "b")), "APPROVED", null, null));
@@ -131,7 +131,7 @@ class AuditServiceIT extends PostgresIntegrationTest {
             List<Future<?>> futures = new ArrayList<>();
             for (int i = 0; i < writers; i++) {
                 String name = "Concurrent " + i;
-                futures.add(pool.submit(() -> inTenant(tenantA, () -> tx.execute(s -> {
+                futures.add(pool.submit(() -> inTenant(tenantA, () -> tx.execute(_ -> {
                     audit.open("product.update");
                     return audit.record(SAM, productUpdate(null, name));
                 }))));

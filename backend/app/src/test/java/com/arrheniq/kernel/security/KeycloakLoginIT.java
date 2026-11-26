@@ -116,7 +116,7 @@ class KeycloakLoginIT extends PostgresIntegrationTest {
         if (!userInvited) {
             tenant = provisionTenantWithSlug(TENANT_SLUG);
             TransactionTemplate tx = new TransactionTemplate(txManager);
-            TenantContextHolder.callAs(TenantContext.system(tenant), () -> tx.execute(s -> {
+            TenantContextHolder.callAs(TenantContext.system(tenant), () -> tx.execute(_ -> {
                 audit.open("it.invite");
                 return invitations.invite(AuditActor.system("it"), new UserInvitationService.Invitation(
                         "kcuser", "kcuser@kcit.test", "Kim Cloak",
