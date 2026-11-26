@@ -3,6 +3,8 @@ import { SessionProvider } from './auth/SessionProvider';
 import { AppLayout } from './layout/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { ListsPage } from './pages/ListsPage';
+import { ProtocolDetailPage } from './pages/ProtocolDetailPage';
+import { ProtocolsPage } from './pages/ProtocolsPage';
 import { SpecificationDetailPage } from './pages/SpecificationDetailPage';
 import { SpecificationsPage } from './pages/SpecificationsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -84,6 +86,25 @@ const specificationRoute = createRoute({
   }),
 });
 
+const protocolsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/protocols',
+  component: ProtocolsPage,
+  validateSearch: (search: Record<string, unknown>): { new?: string; productId?: string } => ({
+    new: str(search.new),
+    productId: str(search.productId),
+  }),
+});
+const protocolRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/protocols/$protocolId',
+  component: ProtocolDetailPage,
+  validateSearch: (search: Record<string, unknown>): { v?: string; signing?: string } => ({
+    v: str(search.v),
+    signing: str(search.signing),
+  }),
+});
+
 const routeTree = rootRoute.addChildren([
   signedOutRoute,
   welcomeRoute,
@@ -93,6 +114,8 @@ const routeTree = rootRoute.addChildren([
     productRoute,
     specificationsRoute,
     specificationRoute,
+    protocolsRoute,
+    protocolRoute,
     testMethodsRoute,
     listsRoute,
   ]),

@@ -21,11 +21,11 @@ import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useSession } from '../auth/SessionProvider';
 import { logout } from '../auth/navigation';
 import { Logo } from '../brand/Logo';
-import { IconCollapse, IconExpand, IconHome, IconList, IconLogout, IconMoon, IconProduct, IconSpec, IconSun, IconTest } from '../components/icons';
+import { IconCalendar, IconCollapse, IconExpand, IconHome, IconList, IconLogout, IconMoon, IconProduct, IconSpec, IconSun, IconTest } from '../components/icons';
 import { CopyrightLine } from './Footer';
 
 interface NavItem {
-  to: '/' | '/products' | '/specifications' | '/test-methods' | '/lists';
+  to: '/' | '/products' | '/specifications' | '/protocols' | '/test-methods' | '/lists';
   label: string;
   description: string;
   icon: ReactNode;
@@ -36,6 +36,7 @@ const NAV: NavItem[] = [
   { to: '/', label: 'Home', description: 'Overview and your tasks', icon: <IconHome size={20} /> },
   { to: '/products', label: 'Products', description: 'Drug substances & products', icon: <IconProduct size={20} />, permission: 'masterdata.view' },
   { to: '/specifications', label: 'Specifications', description: 'Limits, versions, approval', icon: <IconSpec size={20} />, permission: 'masterdata.view' },
+  { to: '/protocols', label: 'Protocols', description: 'Time points, test plan, units', icon: <IconCalendar size={20} />, permission: 'masterdata.view' },
   { to: '/test-methods', label: 'Test library', description: 'Methods, units, limits', icon: <IconTest size={20} />, permission: 'masterdata.view' },
   { to: '/lists', label: 'Lists', description: 'Conditions, units, ICH templates', icon: <IconList size={20} />, permission: 'masterdata.view' },
 ];

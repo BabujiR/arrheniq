@@ -3,14 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { Alert, Anchor, Badge, Button, Card, Center, Group, Loader, Modal, SimpleGrid, Stack, Text, Textarea, ThemeIcon, Title, Tooltip } from '@mantine/core';
 import { ApiError } from '../api/http';
-import { keys, productsApi, specificationsApi } from '../api/masterdata';
+import { keys, productsApi, protocolsApi, specificationsApi } from '../api/masterdata';
 import type { Product, ProductDetails, Signature } from '../api/types';
 import { useSession } from '../auth/SessionProvider';
 import { goToReauth } from '../auth/navigation';
 import { formatInstant, label } from '../components/format';
 import { notifyError, notifySuccess } from '../components/notify';
 import { ReasonModal } from '../components/ReasonModal';
-import { IconArchive, IconEdit, IconPlus, IconProduct, IconReject, IconSend, IconSignature, IconSpec } from '../components/icons';
+import { IconArchive, IconCalendar, IconEdit, IconPlus, IconProduct, IconReject, IconSend, IconSignature, IconSpec } from '../components/icons';
 import { StatusBadge } from '../components/StatusBadge';
 import { WorkflowStepper } from '../components/WorkflowStepper';
 import { rememberPendingSignature, takePendingSignature } from '../signing/pendingSignature';
@@ -222,6 +222,7 @@ export function ProductDetailPage() {
       </Card>
 
       <ProductSpecifications productId={p.id} canAdd={can('spec.manage') && p.status !== 'RETIRED'} />
+      <ProductProtocols productId={p.id} canAdd={can('protocol.manage') && p.status !== 'RETIRED'} />
 
       <Card withBorder radius="md" className="arq-fade-in">
         <Group gap="xs" mb="sm">
@@ -359,6 +360,56 @@ function ProductSpecifications({ productId, canAdd }: { productId: string; canAd
                   </Badge>
                 ) : null}
                 {sp.openStatus && <StatusBadge status={sp.openStatus} />}
+              </Group>
+            </Group>
+          ))}
+        </Stack>
+      )}
+    </Card>
+  );
+}
+
+/** The product's protocols, with a shortcut to create one (URS-PRO-001). */
+function ProductProtocols({ productId, canAdd }: { productId: string; canAdd: boolean }) {
+  const navigate = useNavigate();
+  const protocols = useQuery({
+    queryKey: keys.protocols({ productId }),
+    queryFn: () => protocolsApi.list({ productId }),
+  });
+  return (
+    <Card withBorder radius="md" className="arq-fade-in">
+      <Group justify="space-between" mb="sm">
+        <Group gap="xs">
+          <ThemeIcon size={28} radius="md" variant="light" color="arqIndigo">
+            <IconCalendar />
+          </ThemeIcon>
+          <Title order={5}>Protocols</Title>
+        </Group>
+        {canAdd && (
+          <Button size="xs" variant="light" leftSection={<IconPlus size={14} />}
+                  onClick={() => void navigate({ to: '/protocols', search: { new: '1', productId } })}>
+            New protocol
+          </Button>
+        )}
+      </Group>
+      {protocols.data && protocols.data.length === 0 ? (
+        <Text size="sm" c="dimmed">
+          No protocol yet.
+        </Text>
+      ) : (
+        <Stack gap={6}>
+          {protocols.data?.map((pr) => (
+            <Group key={pr.id} justify="space-between" wrap="nowrap">
+              <Anchor size="sm" onClick={() => void navigate({ to: '/protocols/$protocolId', params: { protocolId: pr.id } })}>
+                {pr.protocolNumber} · {pr.name}
+              </Anchor>
+              <Group gap={6} wrap="nowrap">
+                {pr.approvedVersionNo ? (
+                  <Badge size="sm" variant="light" color="green">
+                    v{pr.approvedVersionNo} approved
+                  </Badge>
+                ) : null}
+                {pr.openStatus && <StatusBadge status={pr.openStatus} />}
               </Group>
             </Group>
           ))}

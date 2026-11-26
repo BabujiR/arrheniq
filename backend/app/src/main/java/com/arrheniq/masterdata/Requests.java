@@ -27,6 +27,15 @@ public final class Requests {
     public record SpecVersionUpdate(@Nullable Long expectedVersion, @Nullable String reason,
                                     @Nullable SpecContent data) { }
 
+    /**
+     * A new protocol: version 1 starts from an ICH template (time points, study type, condition) and/or the tests of
+     * a specification version of the same product; both optional.
+     */
+    public record ProtocolCreate(@Nullable UUID productId, @Nullable String protocolNumber, @Nullable String name,
+                                 @Nullable String templateCode, @Nullable UUID specVersionId) { }
+
+    public record ProtocolVersionUpdate(@Nullable Long expectedVersion, @Nullable ProtocolInput data) { }
+
     /** Submit / reject / retire: reason required for reject and retire (ReasonPolicy). */
     public record StatusChange(@Nullable Long expectedVersion, @Nullable String reason) { }
 

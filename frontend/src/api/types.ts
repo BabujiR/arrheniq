@@ -249,3 +249,99 @@ export interface SpecVersionDetails {
   createdAt: string;
   updatedAt: string | null;
 }
+
+/** Protocols (backend masterdata.Protocol*; URS-PRO-001/002/003/005/007). */
+export type StudyType =
+  | 'LONG_TERM'
+  | 'INTERMEDIATE'
+  | 'ACCELERATED'
+  | 'STRESS'
+  | 'PHOTOSTABILITY'
+  | 'IN_USE'
+  | 'EXCURSION'
+  | 'COMMITMENT'
+  | 'ANNUAL'
+  | 'OTHER';
+export type TimeUnit = 'DAY' | 'WEEK' | 'MONTH';
+export type ProtocolVersionStatus = 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'SUPERSEDED' | 'RETIRED';
+
+export interface ProtocolSummary {
+  id: string;
+  protocolNumber: string;
+  name: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  siteId: string;
+  approvedVersionNo: number | null;
+  approvedFrom: string | null;
+  studyType: StudyType | null;
+  conditionCode: string | null;
+  openVersionId: string | null;
+  openVersionNo: number | null;
+  openStatus: 'DRAFT' | 'IN_REVIEW' | null;
+}
+
+export interface ProtocolVersionSummary {
+  id: string;
+  versionNo: number;
+  status: ProtocolVersionStatus;
+  studyType: StudyType;
+  conditionCode: string | null;
+  effectiveFrom: string | null;
+  changeSummary: string | null;
+  timepointCount: number;
+  testCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface ProtocolDetails {
+  protocol: ProtocolSummary;
+  versions: ProtocolVersionSummary[];
+}
+
+export interface TimePoint {
+  value: number;
+  unit: TimeUnit;
+  label: string;
+  unitsPlanned: number;
+}
+
+export interface ProtocolTest {
+  testMethodId: string;
+  testCode: string;
+  testName: string;
+  testStatus: 'ACTIVE' | 'RETIRED';
+  resultsFormat: ResultsFormat;
+  /** indexes into timepoints */
+  at: number[];
+}
+
+export interface ProtocolContent {
+  studyType: StudyType;
+  conditionCode: string | null;
+  reserveUnits: number;
+  fillUnitCode: string | null;
+  changeSummary: string | null;
+  timepoints: TimePoint[];
+  tests: ProtocolTest[];
+}
+
+export interface ProtocolVersionDetails {
+  id: string;
+  version: number;
+  protocol: ProtocolSummary;
+  versionNo: number;
+  status: ProtocolVersionStatus;
+  effectiveFrom: string | null;
+  content: ProtocolContent;
+  conditionLabel: string | null;
+  totalUnits: number;
+  warnings: string[];
+  previousVersionId: string | null;
+  signatures: Signature[];
+  approval: ApprovalProgress;
+  createdAt: string;
+  updatedAt: string | null;
+}
