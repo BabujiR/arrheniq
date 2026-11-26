@@ -20,6 +20,9 @@ import java.util.UUID;
 @Component
 public class CurrentUserLoader {
 
+    private static final String[] ACTIVE = {"ACTIVE"};
+    private static final String[] ACTIVE_OR_INVITED = {"ACTIVE", "INVITED"};
+
     private final JdbcClient jdbc;
     private final TransactionTemplate readOnly;
 
@@ -31,18 +34,26 @@ public class CurrentUserLoader {
 
     /** Empty if the user no longer exists, is not ACTIVE, or the tenant is not ACTIVE. */
     public Optional<CurrentUser> load(ArrheniqUser principal) {
-        return load(principal.tenantId(), principal.tenantSlug(), principal.userId());
+        return load(principal.tenantId(), principal.tenantSlug(), principal.userId(), ACTIVE);
     }
 
-    /** As {@link #load(ArrheniqUser)}, for a user known by id (used by {@link LocalUserContext}). */
-    Optional<CurrentUser> load(UUID tenantId, String tenantSlug, UUID userId) {
+    /**
+     * As {@link #load(ArrheniqUser)}, for a user known by id, for {@link LocalUserContext} only: an INVITED user
+     * (not signed in yet, so not linked to the IdP) also counts, so local demo data can be created before anyone
+     * has signed in.
+     */
+    Optional<CurrentUser> loadForLocalDev(UUID tenantId, String tenantSlug, UUID userId) {
+        return load(tenantId, tenantSlug, userId, ACTIVE_OR_INVITED);
+    }
+
+    private Optional<CurrentUser> load(UUID tenantId, String tenantSlug, UUID userId, String[] statuses) {
         List<Optional<CurrentUser>> result = new ArrayList<>(1);
         TenantContextHolder.runAs(TenantContext.system(tenantId),
-                () -> readOnly.executeWithoutResult(_ -> result.add(query(tenantId, tenantSlug, userId))));
+                () -> readOnly.executeWithoutResult(_ -> result.add(query(tenantId, tenantSlug, userId, statuses))));
         return result.getFirst();
     }
 
-    private Optional<CurrentUser> query(UUID tenantId, String tenantSlug, UUID userId) {
+    private Optional<CurrentUser> query(UUID tenantId, String tenantSlug, UUID userId, String[] statuses) {
         boolean activeTenant = jdbc.sql("SELECT status = 'ACTIVE' FROM platform.tenant WHERE id = ?")
                 .param(tenantId).query(Boolean.class).optional().orElse(false);
         if (!activeTenant) {
@@ -50,9 +61,9 @@ public class CurrentUserLoader {
         }
         Optional<String[]> user = jdbc.sql("""
                 SELECT username, display_name FROM app.app_user
-                 WHERE id = ? AND status = 'ACTIVE' AND deleted_at IS NULL
+                 WHERE id = ? AND status = ANY (CAST(? AS text[])) AND deleted_at IS NULL
                 """)
-                .param(userId)
+                .params(userId, statuses)
                 .query((rs, _) -> new String[] {rs.getString(1), rs.getString(2)})
                 .optional();
         if (user.isEmpty()) {

@@ -40,7 +40,7 @@ public class LocalUserContext {
         this.readOnly.setReadOnly(true);
     }
 
-    /** Runs {@code work} as the ACTIVE user {@code username} of the tenant. */
+    /** Runs {@code work} as the user {@code username} of the tenant (ACTIVE, or INVITED and not signed in yet). */
     public void runAs(UUID tenantId, String username, Runnable work) {
         List<Optional<String[]>> found = new ArrayList<>(1);
         TenantContextHolder.runAs(TenantContext.system(tenantId), () -> readOnly.executeWithoutResult(_ -> found.add(
@@ -52,8 +52,8 @@ public class LocalUserContext {
                     .query((rs, _) -> new String[] {rs.getString(1), rs.getString(2)})
                     .optional())));
         String[] row = found.getFirst().orElseThrow(() -> new IllegalStateException("no user " + username));
-        CurrentUser user = loader.load(tenantId, row[0], UUID.fromString(row[1]))
-                .orElseThrow(() -> new IllegalStateException("user " + username + " is not active"));
+        CurrentUser user = loader.loadForLocalDev(tenantId, row[0], UUID.fromString(row[1]))
+                .orElseThrow(() -> new IllegalStateException("user " + username + " is deactivated"));
         SiteScope visible = user.grants().visibleSites();
         SecurityContext previous = SecurityContextHolder.getContext();
         SecurityContext context = SecurityContextHolder.createEmptyContext();
