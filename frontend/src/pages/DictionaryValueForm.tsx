@@ -109,11 +109,16 @@ export function DictionaryValueForm({ opened, list, existing, canManage, onClose
   });
 
   const statusChange = useMutation({
-    mutationFn: ({ action, reason }: { action: Exclude<ReasonFor, 'save'>; reason: string }) => {
+    // the dialog closes and the list reloads afterwards, so no result is needed
+    mutationFn: async ({ action, reason }: { action: Exclude<ReasonFor, 'save'>; reason: string }): Promise<void> => {
       const e = existing!;
-      if (action === 'retire') return dictionariesApi.retire(list.code, e.id, e.version, reason);
-      if (action === 'reactivate') return dictionariesApi.reactivate(list.code, e.id, e.version, reason);
-      return dictionariesApi.remove(list.code, e.id, e.version, reason);
+      if (action === 'retire') {
+        await dictionariesApi.retire(list.code, e.id, e.version, reason);
+      } else if (action === 'reactivate') {
+        await dictionariesApi.reactivate(list.code, e.id, e.version, reason);
+      } else {
+        await dictionariesApi.remove(list.code, e.id, e.version, reason);
+      }
     },
     onSuccess: (_, v) =>
       done(`${existing!.code} ${v.action === 'retire' ? 'retired' : v.action === 'reactivate' ? 'reactivated' : 'deleted'}`),
