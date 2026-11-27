@@ -68,8 +68,9 @@ final class ProtocolRules {
                 v.add(f + "value", "REQUIRED", null);
             } else if (value.signum() < 0 || value.compareTo(new BigDecimal("10000")) > 0) {
                 v.add(f + "value", "OUT_OF_RANGE", "0..10000");
-            } else if (value.stripTrailingZeros().scale() > 2) {
-                v.add(f + "value", "FORMAT", "at most 2 decimals");
+            } else if (value.stripTrailingZeros().scale() > 0) {
+                // pull dates are calendar arithmetic in whole months, weeks or days (URS-SCH-001)
+                v.add(f + "value", "FORMAT", "a whole number");
             }
             v.oneOf(f + "unit", unit, UNITS);
             int units = t.unitsPlanned() == null ? 0 : t.unitsPlanned();

@@ -260,7 +260,8 @@ export function ProtocolEditor({ content: c, editable, onChange, library, condit
 
       {editable && (
         <Group gap="xs" align="flex-end">
-          <NumberInput label="Add time point" placeholder="e.g. 18" min={0} w={120} value={newValue}
+          <NumberInput label="Add time point" placeholder="e.g. 18" min={0} max={10000} allowDecimal={false}
+                       allowNegative={false} w={120} value={newValue}
                        onChange={setNewValue} onKeyDown={(e) => e.key === 'Enter' && addTp()} />
           <Select w={110} data={[{ value: 'MONTH', label: 'months' }, { value: 'WEEK', label: 'weeks' }, { value: 'DAY', label: 'days' }]}
                   value={newUnit} allowDeselect={false} onChange={(v) => v && setNewUnit(v as TimeUnit)} />

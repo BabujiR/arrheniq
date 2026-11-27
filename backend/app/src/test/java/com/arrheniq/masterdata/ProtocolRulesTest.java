@@ -50,7 +50,7 @@ class ProtocolRulesTest {
     void mistakesAreReportedWithTheirPosition() {
         ApiException e = assertThrows(ApiException.class, () -> ProtocolRules.validate(new ProtocolInput("WEEKLY",
                 "99C", -1, null, null,
-                List.of(tp("3", "MONTH", 1), tp("3.0", "MONTH", 1), tp("1", "YEAR", 1), tp("0.125", "MONTH", 1)),
+                List.of(tp("3", "MONTH", 1), tp("3.0", "MONTH", 1), tp("1", "YEAR", 1), tp("1.5", "MONTH", 1)),
                 List.of(new ProtocolInput.TestInput(ASSAY, List.of()), new ProtocolInput.TestInput(ASSAY, List.of(0)),
                         new ProtocolInput.TestInput(WATER, List.of(9)), new ProtocolInput.TestInput(OLD, List.of(0)))),
                 LIBRARY, Set.of(), CONDITIONS));

@@ -33,6 +33,7 @@ import { ReasonModal } from '../components/ReasonModal';
 import { StatusBadge } from '../components/StatusBadge';
 import { RecordHistory } from '../audit/RecordHistory';
 import { ProtocolEditor } from '../protocol/ProtocolEditor';
+import { PullDatePreviewCard } from '../scheduling/PullDatePreviewCard';
 import { rememberPendingSignature, takePendingSignature } from '../signing/pendingSignature';
 
 type ReasonAction = 'reject' | 'retire' | 'discard';
@@ -378,6 +379,10 @@ export function ProtocolDetailPage() {
                   )
                 )}
               </Card>
+
+              {v.content.timepoints.length > 0 && (
+                <PullDatePreviewCard versionId={v.id} revision={v.version} unsaved={editable && dirty} />
+              )}
 
               <Card withBorder radius="md" className="arq-fade-in">
                 <Group gap="xs" mb="sm">

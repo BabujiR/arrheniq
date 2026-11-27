@@ -207,7 +207,59 @@ class ProtocolIT extends PostgresIntegrationTest {
         assertEquals(404, call(managerS2, get("/api/v1/protocol-versions/" + v1)).getResponse().getStatus());
     }
 
+    /** Pull-date preview (URS-SCH-001/002): site holidays and a site-level weekend rule apply; scope as for protocols. */
+    @Test
+    @Requirement({"URS-SCH-001", "URS-SCH-002"})
+    void pullDatesForAnOnStabilityDateFollowTheSiteRules() throws Exception {
+        String v1 = newProtocol("PRT-DATES", "LT_ZONE_II_36M");
+        ownerSql("UPDATE app.site SET holiday_calendar = '[\"2027-12-01\"]' WHERE code = 'S1'");
+        ownerSql("""
+                INSERT INTO app.tenant_setting (tenant_id, id, setting_key, site_id, value)
+                SELECT app.current_tenant(), gen_random_uuid(), 'scheduling.saturday_rule', id, '"MOVE_BEFORE"'
+                  FROM app.site WHERE code = 'S1'""");
+
+        MvcResult r = call(manager, get("/api/v1/protocol-versions/" + v1 + "/pull-dates?onStabilityDate=2026-12-01"));
+        assertEquals(200, r.getResponse().getStatus(), body(r));
+        String json = body(r);
+        assertTrue(json.contains("\"algorithm\":\"schedule.pull-dates@1.0.0\"")
+                && json.contains("\"saturday\":\"MOVE_BEFORE\"") && json.contains("\"holidays\":[\"2027-12-01\"]"), json);
+        // 0 3 6 9 12 18 24 36 months from Tue 1 Dec 2026
+        String initial = pullLine(json, "2026-12-01");
+        assertTrue(initial.contains("\"label\":\"Initial\"") && initial.contains("\"pullDate\":\"2026-12-01\""), initial);
+        String twelve = pullLine(json, "2027-12-01");    // a site holiday
+        assertTrue(twelve.contains("\"pullDate\":\"2027-12-02\"")
+                && twelve.contains("\"ruleApplied\":\"HOLIDAY_TO_NEXT_WORKDAY\""), twelve);
+        String thirtySix = pullLine(json, "2029-12-01"); // a Saturday, moved by the site's own rule
+        assertTrue(thirtySix.contains("\"pullDate\":\"2029-11-30\"")
+                && thirtySix.contains("\"ruleApplied\":\"SATURDAY_TO_PREVIOUS_WORKDAY\""), thirtySix);
+
+        assertEquals(404, call(managerS2, get("/api/v1/protocol-versions/" + v1 + "/pull-dates?onStabilityDate=2026-12-01"))
+                .getResponse().getStatus());
+        assertEquals(400, call(manager, get("/api/v1/protocol-versions/" + v1 + "/pull-dates?onStabilityDate=1899-01-01"))
+                .getResponse().getStatus());
+        assertEquals(400, call(manager, get("/api/v1/protocol-versions/" + v1 + "/pull-dates"))
+                .getResponse().getStatus());
+    }
+
     // ------------------------------------------------------------------ helpers
+
+    /** The pull-date line (one JSON object) whose calendar date is {@code calculatedDate}. */
+    private static String pullLine(String json, String calculatedDate) {
+        for (String line : json.split("\\},\\{")) {
+            if (line.contains("\"calculatedDate\":\"" + calculatedDate + "\"")) {
+                return line;
+            }
+        }
+        throw new AssertionError("no pull date calculated on " + calculatedDate + ": " + json);
+    }
+
+    private void ownerSql(String sql) throws SQLException {
+        try (Connection c = tenantOwnerConnection(); PreparedStatement s = c.prepareStatement(sql)) {
+            s.executeUpdate();
+            c.commit();
+        }
+    }
+
 
     private String newProtocol(String number, @Nullable String template) throws Exception {
         MvcResult created = send(manager, post("/api/v1/protocols"), """
