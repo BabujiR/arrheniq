@@ -51,7 +51,7 @@ public class SpecificationService {
 
     private static final String SUMMARY_SELECT = """
             SELECT s.id, s.spec_number, s.title, s.product_id, p.code AS product_code, p.name AS product_name,
-                   p.site_id, ev.version_no AS effective_no, ev.effective_from,
+                   p.site_id, ev.version_no AS effective_no, ev.effective_from, ev.id AS effective_id,
                    ov.id AS open_id, ov.version_no AS open_no, ov.status AS open_status
               FROM app.specification s
               JOIN app.product p ON p.tenant_id = s.tenant_id AND p.id = s.product_id
@@ -68,7 +68,8 @@ public class SpecificationService {
             rs.getObject("product_id", UUID.class), rs.getString("product_code"), rs.getString("product_name"),
             rs.getObject("site_id", UUID.class), rs.getObject("effective_no", Integer.class),
             rs.getObject("effective_from", LocalDate.class), rs.getObject("open_id", UUID.class),
-            rs.getObject("open_no", Integer.class), rs.getString("open_status"));
+            rs.getObject("open_no", Integer.class), rs.getString("open_status"),
+            rs.getObject("effective_id", UUID.class));
 
     /** A version row (without tests). */
     private record VersionRow(UUID id, long version, UUID specificationId, int versionNo, String status,
@@ -603,7 +604,8 @@ public class SpecificationService {
                  WHERE p.specification_id = ? AND p.version_no < ? AND p.deleted_at IS NULL
                    AND t.deleted_at IS NULL
                 """)
-            .params(v.specificationId(), v.versionNo()).query(UUID.class).list());
+            .params(v.specificationId(), v.versionNo())
+            .query((rs, _) -> Objects.requireNonNull(rs.getObject(1, UUID.class))).list());
     }
 
     /** What is compared for the audit trail of a draft. */

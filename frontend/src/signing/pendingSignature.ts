@@ -5,7 +5,7 @@
  */
 
 export interface PendingSignature {
-  recordType: 'PRODUCT' | 'SPEC_VERSION' | 'PROTOCOL_VERSION';
+  recordType: 'PRODUCT' | 'SPEC_VERSION' | 'PROTOCOL_VERSION' | 'STUDY';
   recordId: string;
   expectedVersion: number;
   comment: string;

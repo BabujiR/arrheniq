@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Button, Card, Group, SimpleGrid, Skeleton, Stack, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
 import { keys, productsApi, protocolsApi, specificationsApi, testMethodsApi } from '../api/masterdata';
+import { studiesApi, studyKeys } from '../api/studies';
 import type { Product } from '../api/types';
 import { useSession } from '../auth/SessionProvider';
 import { EmptyState } from '../components/EmptyState';
 import { formatInstant } from '../components/format';
-import { IconApproved, IconCalendar, IconCheck, IconDraft, IconHome, IconPlus, IconProduct, IconReview, IconSpec, IconTest } from '../components/icons';
+import { IconApproved, IconCalendar, IconCheck, IconDraft, IconHome, IconPlus, IconProduct, IconReview, IconSpec, IconStudy, IconTest } from '../components/icons';
 import { PageHeader } from '../components/PageHeader';
 import { StatusBadge } from '../components/StatusBadge';
 import { useCountUp } from '../components/useCountUp';
@@ -54,13 +55,29 @@ export function HomePage() {
     enabled: canView,
   });
 
+  const studies = useQuery({
+    queryKey: studyKeys.list({}),
+    queryFn: () => studiesApi.list({}),
+    enabled: can('study.view'),
+  });
+
   const all = products.data ?? [];
   const count = (status: Product['status']) => all.filter((p) => p.status === status).length;
   const firstName = me.displayName.split(' ')[0] ?? me.displayName;
-  const loading = products.isPending || tests.isPending || specs.isPending || protocols.isPending;
+  const loading = products.isPending || tests.isPending || specs.isPending || protocols.isPending || studies.isLoading;
 
   // work lists across products, specifications and protocols, limited to what this user may act on
   const items = (status: 'DRAFT' | 'IN_REVIEW', kind: 'manage' | 'approve'): WorkItem[] => [
+    ...(can(kind === 'manage' ? 'study.create' : 'study.approve') ? (studies.data ?? []) : [])
+      .filter((st) => st.status === status)
+      .map((st) => ({
+        key: `t-${st.id}`,
+        icon: <IconStudy size={16} />,
+        title: `Study ${st.studyCode} · ${st.productCode} lot ${st.lotNumber}`,
+        detail: `Study · ${st.conditionLabel}`,
+        status,
+        open: () => void navigate({ to: '/studies/$studyId', params: { studyId: st.id } }),
+      })),
     ...(can(`product.${kind}`) ? all : [])
       .filter((p) => p.status === status)
       .map((p) => ({
@@ -95,16 +112,18 @@ export function HomePage() {
   ];
   const waiting = items('IN_REVIEW', 'approve');
   const drafts = items('DRAFT', 'manage');
-  const canApproveAny = can('product.approve') || can('spec.approve') || can('protocol.approve');
-  const canManageAny = can('product.manage') || can('spec.manage') || can('protocol.manage');
+  const canApproveAny = can('product.approve') || can('spec.approve') || can('protocol.approve') || can('study.approve');
+  const canManageAny = can('product.manage') || can('spec.manage') || can('protocol.manage') || can('study.create');
   const inReviewTotal =
     count('IN_REVIEW') +
     (specs.data ?? []).filter((x) => x.openStatus === 'IN_REVIEW').length +
-    (protocols.data ?? []).filter((x) => x.openStatus === 'IN_REVIEW').length;
+    (protocols.data ?? []).filter((x) => x.openStatus === 'IN_REVIEW').length +
+    (studies.data ?? []).filter((x) => x.status === 'IN_REVIEW').length;
   const draftTotal =
     count('DRAFT') +
     (specs.data ?? []).filter((x) => x.openStatus === 'DRAFT').length +
-    (protocols.data ?? []).filter((x) => x.openStatus === 'DRAFT').length;
+    (protocols.data ?? []).filter((x) => x.openStatus === 'DRAFT').length +
+    (studies.data ?? []).filter((x) => x.status === 'DRAFT').length;
 
   return (
     <Stack gap="lg">

@@ -113,6 +113,17 @@ export const IconCalendar = (p: P) => (
   </Svg>
 );
 
+/** Study: a stability chamber with its shelves and a thermometer. */
+export const IconStudy = (p: P) => (
+  <Svg name="study" {...p}>
+    <rect className="d" x="4" y="3" width="16" height="18" rx="2.5" />
+    <rect x="4" y="3" width="16" height="18" rx="2.5" />
+    <path d="M4 9h11M4 15h11" />
+    <path d="M17.5 6.5v8.2" />
+    <circle cx="17.5" cy="16.3" r="1.3" />
+  </Svg>
+);
+
 export const IconPlus = (p: P) => (
   <Svg name="plus" {...p}>
     <path d="M12 5v14M5 12h14" />

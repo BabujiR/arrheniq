@@ -21,11 +21,11 @@ import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useSession } from '../auth/SessionProvider';
 import { logout } from '../auth/navigation';
 import { Logo } from '../brand/Logo';
-import { IconCalendar, IconCollapse, IconExpand, IconHome, IconList, IconLogout, IconMoon, IconProduct, IconSpec, IconSun, IconTest } from '../components/icons';
+import { IconCalendar, IconCollapse, IconExpand, IconHome, IconList, IconLogout, IconMoon, IconProduct, IconSpec, IconStudy, IconSun, IconTest } from '../components/icons';
 import { CopyrightLine } from './Footer';
 
 interface NavItem {
-  to: '/' | '/products' | '/specifications' | '/protocols' | '/test-methods' | '/lists';
+  to: '/' | '/studies' | '/products' | '/specifications' | '/protocols' | '/test-methods' | '/lists';
   label: string;
   description: string;
   icon: ReactNode;
@@ -34,6 +34,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: '/', label: 'Home', description: 'Overview and your tasks', icon: <IconHome size={20} /> },
+  { to: '/studies', label: 'Studies', description: 'Lots on stability, pull schedules', icon: <IconStudy size={20} />, permission: 'study.view' },
   { to: '/products', label: 'Products', description: 'Drug substances & products', icon: <IconProduct size={20} />, permission: 'masterdata.view' },
   { to: '/specifications', label: 'Specifications', description: 'Limits, versions, approval', icon: <IconSpec size={20} />, permission: 'masterdata.view' },
   { to: '/protocols', label: 'Protocols', description: 'Time points, test plan, units', icon: <IconCalendar size={20} />, permission: 'masterdata.view' },

@@ -55,7 +55,7 @@ public class ProtocolService {
 
     private static final String SUMMARY_SELECT = """
             SELECT r.id, r.protocol_number, r.name, r.product_id, p.code AS product_code, p.name AS product_name,
-                   p.site_id, av.version_no AS approved_no, av.effective_from AS approved_from,
+                   p.site_id, av.version_no AS approved_no, av.effective_from AS approved_from, av.id AS approved_id,
                    COALESCE(ov.study_type, av.study_type) AS study_type,
                    COALESCE(ov.condition_code, av.condition_code) AS condition_code,
                    ov.id AS open_id, ov.version_no AS open_no, ov.status AS open_status
@@ -76,7 +76,8 @@ public class ProtocolService {
             rs.getObject("site_id", UUID.class), rs.getObject("approved_no", Integer.class),
             rs.getObject("approved_from", LocalDate.class), rs.getString("study_type"),
             rs.getString("condition_code"), rs.getObject("open_id", UUID.class),
-            rs.getObject("open_no", Integer.class), rs.getString("open_status"));
+            rs.getObject("open_no", Integer.class), rs.getString("open_status"),
+            rs.getObject("approved_id", UUID.class));
 
     private record VersionRow(UUID id, long version, UUID protocolId, int versionNo, String status,
                               String studyType, @Nullable String conditionCode, int reserveUnits,

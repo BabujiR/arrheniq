@@ -9,9 +9,21 @@ import { formatDay, ruleText, rulesSummary, todayIso } from './pullDates';
 /**
  * Pull dates this protocol version would give for an on-stability date, with the site's weekend and holiday
  * rules (URS-SCH-001/002). A preview: nothing is stored. Uses the saved version, so unsaved edits don't show.
+ * With `fixedDate` (a draft study) the date isn't editable and the card says when the dates become real.
  */
-export function PullDatePreviewCard({ versionId, revision, unsaved }: { versionId: string; revision: number; unsaved: boolean }) {
-  const [onStability, setOnStability] = useState(todayIso());
+export function PullDatePreviewCard({
+  versionId,
+  revision,
+  unsaved = false,
+  fixedDate,
+}: {
+  versionId: string;
+  revision: number;
+  unsaved?: boolean;
+  fixedDate?: string;
+}) {
+  const [chosen, setOnStability] = useState(todayIso());
+  const onStability = fixedDate ?? chosen;
   const valid = /^\d{4}-\d{2}-\d{2}$/.test(onStability);
   const preview = useQuery({
     queryKey: ['pull-dates', versionId, revision, onStability],
@@ -28,14 +40,18 @@ export function PullDatePreviewCard({ versionId, revision, unsaved }: { versionI
             <IconCalendar />
           </ThemeIcon>
           <div>
-            <Title order={5}>Pull dates</Title>
+            <Title order={5}>{fixedDate ? 'Planned pull dates' : 'Pull dates'}</Title>
             <Text size="xs" c="dimmed">
-              Preview for a study placed on stability on this date. Nothing is stored.
+              {fixedDate
+                ? 'Calculated with today’s site rules. The schedule is generated and stored when the study is approved.'
+                : 'Preview for a study placed on stability on this date. Nothing is stored.'}
             </Text>
           </div>
         </Group>
-        <TextInput type="date" label="On-stability date" w={180} value={onStability}
-                   onChange={(e) => setOnStability(e.currentTarget.value)} />
+        {!fixedDate && (
+          <TextInput type="date" label="On-stability date" w={180} value={onStability}
+                     onChange={(e) => setOnStability(e.currentTarget.value)} />
+        )}
       </Group>
       {unsaved && (
         <Text size="xs" c="orange" mb="xs">

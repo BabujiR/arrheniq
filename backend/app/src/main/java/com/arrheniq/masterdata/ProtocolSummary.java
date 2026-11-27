@@ -10,5 +10,6 @@ public record ProtocolSummary(UUID id, String protocolNumber, String name, UUID 
                               String productName, UUID siteId, @Nullable Integer approvedVersionNo,
                               @Nullable LocalDate approvedFrom, @Nullable String studyType,
                               @Nullable String conditionCode, @Nullable UUID openVersionId,
-                              @Nullable Integer openVersionNo, @Nullable String openStatus) {
+                              @Nullable Integer openVersionNo, @Nullable String openStatus,
+                              @Nullable UUID approvedVersionId) {
 }

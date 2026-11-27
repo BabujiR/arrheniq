@@ -5,6 +5,9 @@ import { HomePage } from './pages/HomePage';
 import { ListsPage } from './pages/ListsPage';
 import { ProtocolDetailPage } from './pages/ProtocolDetailPage';
 import { ProtocolsPage } from './pages/ProtocolsPage';
+import { StudiesPage } from './pages/StudiesPage';
+import { StudyDetailPage } from './pages/StudyDetailPage';
+import { StudyLoginPage } from './pages/StudyLoginPage';
 import { SpecificationDetailPage } from './pages/SpecificationDetailPage';
 import { SpecificationsPage } from './pages/SpecificationsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -105,6 +108,24 @@ const protocolRoute = createRoute({
   }),
 });
 
+const studiesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/studies',
+  component: StudiesPage,
+});
+const studyLoginRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/studies/new',
+  component: StudyLoginPage,
+  validateSearch: (search: Record<string, unknown>): { productId?: string } => ({ productId: str(search.productId) }),
+});
+const studyRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/studies/$studyId',
+  component: StudyDetailPage,
+  validateSearch: (search: Record<string, unknown>): { signing?: string } => ({ signing: str(search.signing) }),
+});
+
 const routeTree = rootRoute.addChildren([
   signedOutRoute,
   welcomeRoute,
@@ -116,6 +137,9 @@ const routeTree = rootRoute.addChildren([
     specificationRoute,
     protocolsRoute,
     protocolRoute,
+    studiesRoute,
+    studyLoginRoute,
+    studyRoute,
     testMethodsRoute,
     listsRoute,
   ]),

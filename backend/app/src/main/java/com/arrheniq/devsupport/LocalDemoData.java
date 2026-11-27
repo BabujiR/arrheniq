@@ -3,6 +3,8 @@ package com.arrheniq.devsupport;
 import com.arrheniq.kernel.security.LocalUserContext;
 import com.arrheniq.kernel.tenancy.TenantContext;
 import com.arrheniq.kernel.tenancy.TenantContextHolder;
+import com.arrheniq.masterdata.DictionaryService;
+import com.arrheniq.masterdata.DictionaryValueInput;
 import com.arrheniq.masterdata.ProductDetails;
 import com.arrheniq.masterdata.ProductInput;
 import com.arrheniq.masterdata.ProductService;
@@ -65,10 +67,12 @@ class LocalDemoData implements ApplicationRunner {
     private final ProductService products;
     private final SpecificationService specs;
     private final ProtocolService protocols;
+    private final DictionaryService dictionaries;
 
     LocalDemoData(@Value("${arrheniq.dev.demo-data:true}") boolean enabled, JdbcClient jdbc,
                   PlatformTransactionManager txManager, LocalUserContext users, TestMethodService tests,
-                  ProductService products, SpecificationService specs, ProtocolService protocols) {
+                  ProductService products, SpecificationService specs, ProtocolService protocols,
+                  DictionaryService dictionaries) {
         this.enabled = enabled;
         this.jdbc = jdbc;
         this.tx = new TransactionTemplate(txManager);
@@ -77,11 +81,16 @@ class LocalDemoData implements ApplicationRunner {
         this.products = products;
         this.specs = specs;
         this.protocols = protocols;
+        this.dictionaries = dictionaries;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!enabled || exists(LocalDevData.TENANT_A, "MET-500")) {
+        if (!enabled) {
+            return;
+        }
+        storageLocations();
+        if (exists(LocalDevData.TENANT_A, "MET-500")) {
             return;
         }
         try {
@@ -93,6 +102,35 @@ class LocalDemoData implements ApplicationRunner {
         } catch (RuntimeException e) {
             // never block local start-up; what was created stays (each step is its own audited transaction)
             LOG.warn("Demo data incomplete; recreate the local database to try again", e);
+        }
+    }
+
+    /**
+     * Stability chambers at site NJ (list STORAGE_LOCATION, needed for study login, S2.2). Added on its own when
+     * missing, so databases created before S2.2 get them without a reset.
+     */
+    private void storageLocations() {
+        try {
+            boolean any = inTenant(LocalDevData.TENANT_A, () -> jdbc.sql("""
+                    SELECT EXISTS (SELECT 1 FROM app.dictionary_value dv
+                                     JOIN app.dictionary d ON d.tenant_id = dv.tenant_id AND d.id = dv.dictionary_id
+                                    WHERE d.code = 'STORAGE_LOCATION' AND dv.deleted_at IS NULL)
+                    """).query(Boolean.class).single());
+            if (any) {
+                return;
+            }
+            UUID nj = siteId(LocalDevData.TENANT_A, "NJ");
+            users.runAs(LocalDevData.TENANT_A, "smanager", () -> {
+                dictionaries.create("STORAGE_LOCATION", new DictionaryValueInput("CH-01",
+                        "Chamber 1 · 25 °C / 60 % RH", "Walk-in, building 2", 10, nj, null));
+                dictionaries.create("STORAGE_LOCATION", new DictionaryValueInput("CH-02",
+                        "Chamber 2 · 40 °C / 75 % RH", "Reach-in, building 2", 20, nj, null));
+                dictionaries.create("STORAGE_LOCATION", new DictionaryValueInput("CH-03",
+                        "Chamber 3 · 30 °C / 65 % RH", "Reach-in, building 2", 30, nj, null));
+            });
+            LOG.info("Demo storage locations created");
+        } catch (RuntimeException e) {
+            LOG.warn("Demo storage locations not created", e);
         }
     }
 

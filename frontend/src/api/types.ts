@@ -182,6 +182,8 @@ export interface SpecificationSummary {
   openVersionId: string | null;
   openVersionNo: number | null;
   openStatus: 'DRAFT' | 'IN_REVIEW' | null;
+  /** the effective version a study refers to */
+  effectiveVersionId: string | null;
 }
 
 export type SpecVersionStatus = 'DRAFT' | 'IN_REVIEW' | 'EFFECTIVE' | 'SUPERSEDED' | 'RETIRED';
@@ -280,6 +282,8 @@ export interface ProtocolSummary {
   openVersionId: string | null;
   openVersionNo: number | null;
   openStatus: 'DRAFT' | 'IN_REVIEW' | null;
+  /** the approved version a study refers to */
+  approvedVersionId: string | null;
 }
 
 export interface ProtocolVersionSummary {
@@ -345,3 +349,104 @@ export interface ProtocolVersionDetails {
   createdAt: string;
   updatedAt: string | null;
 }
+
+// ---------------------------------------------------------------- studies (S2.2)
+
+export type StudyStatus = 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'COMPLETED' | 'TERMINATED';
+
+export interface StudySummary {
+  id: string;
+  studyCode: string;
+  studyGroupId: string | null;
+  siteId: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  lotNumber: string;
+  conditionCode: string;
+  conditionLabel: string;
+  protocolId: string;
+  protocolNumber: string;
+  protocolVersionId: string;
+  protocolVersionNo: number;
+  studyType: StudyType | null;
+  specVersionId: string;
+  specNumber: string;
+  specVersionNo: number;
+  onStabilityDate: string;
+  status: StudyStatus;
+  nextPullDate: string | null;
+}
+
+export interface StudyDetails {
+  study: StudySummary;
+  version: number;
+  manufactureDate: string | null;
+  expiryDate: string | null;
+  reasonCode: string;
+  reasonLabel: string;
+  studyLengthCode: string;
+  studyLengthLabel: string;
+  storageLocationCode: string;
+  storageLocationLabel: string;
+  proprietaryStudyId: string | null;
+  notes: string | null;
+  unitsPlaced: number;
+  reserveUnits: number;
+  fillUnitCode: string | null;
+  scheduleAlgorithm: string | null;
+  approvedAt: string | null;
+  siblings: { id: string; studyCode: string; conditionCode: string; conditionLabel: string; status: StudyStatus }[];
+  signatures: Signature[];
+  approval: ApprovalProgress;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface StudyTimepoint {
+  id: string;
+  seq: number;
+  label: string;
+  value: number;
+  unit: TimeUnit;
+  calculatedDate: string;
+  pullDate: string;
+  ruleApplied: string | null;
+  windowFrom: string;
+  windowTo: string;
+  unitsPlanned: number;
+  status: 'SCHEDULED' | 'PULLED' | 'IN_TESTING' | 'COMPLETED' | 'TERMINATED';
+}
+
+export interface StudySchedule {
+  studyId: string;
+  algorithm: string | null;
+  timepoints: StudyTimepoint[];
+}
+
+export interface StudyLoginInput {
+  productId: string;
+  specVersionId: string;
+  lotNumber: string;
+  manufactureDate: string | null;
+  expiryDate: string | null;
+  onStabilityDate: string;
+  reasonCode: string | null;
+  studyLengthCode: string | null;
+  proprietaryStudyId: string | null;
+  notes: string | null;
+  conditions: { protocolVersionId: string; storageLocationCode: string | null }[];
+}
+
+export interface StudyUpdateInput {
+  lotNumber: string;
+  manufactureDate: string | null;
+  expiryDate: string | null;
+  onStabilityDate: string;
+  reasonCode: string;
+  studyLengthCode: string;
+  storageLocationCode: string;
+  proprietaryStudyId: string | null;
+  notes: string | null;
+}
+

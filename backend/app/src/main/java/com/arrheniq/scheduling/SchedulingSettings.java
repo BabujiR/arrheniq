@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Reads a site's {@link SchedulingRules}: the tenant settings {@code scheduling.saturday_rule},
+ * Reads a site's {@link SchedulingRules} and pull window: the tenant settings {@code scheduling.saturday_rule},
  * {@code scheduling.sunday_rule} and {@code scheduling.holiday_rule} (a site-level row wins over the tenant
  * default) and the site's {@code holiday_calendar}. A missing or unreadable value is a configuration error, not
  * a silent default (ADR 0011). Runs inside the caller's transaction and tenant context.
@@ -24,6 +24,7 @@ class SchedulingSettings {
     static final String SATURDAY = "scheduling.saturday_rule";
     static final String SUNDAY = "scheduling.sunday_rule";
     static final String HOLIDAY = "scheduling.holiday_rule";
+    static final String WINDOW = "scheduling.pull_window_days";
 
     private final JdbcClient jdbc;
 
@@ -60,6 +61,26 @@ class SchedulingSettings {
         }
         return new SchedulingRules(rule(SATURDAY, site, tenant), rule(SUNDAY, site, tenant),
                 rule(HOLIDAY, site, tenant), holidays);
+    }
+
+    /** {@code scheduling.pull_window_days}: a pull is on time within ± this many days (BR-036). */
+    int windowDays(UUID siteId) {
+        String value = jdbc.sql("""
+                SELECT value #>> '{}' FROM app.tenant_setting
+                 WHERE setting_key = ? AND deleted_at IS NULL AND (site_id IS NULL OR site_id = ?)
+                 ORDER BY site_id NULLS LAST LIMIT 1
+                """)
+            .params(WINDOW, siteId).query(String.class).optional()
+            .orElseThrow(() -> new IllegalStateException("tenant setting " + WINDOW + " is missing"));
+        try {
+            int days = Integer.parseInt(value.trim());
+            if (days < 0 || days > 60) {
+                throw new NumberFormatException("outside 0..60");
+            }
+            return days;
+        } catch (NumberFormatException e) {
+            throw new IllegalStateException("tenant setting " + WINDOW + " must be 0..60 days: '" + value + "'", e);
+        }
     }
 
     private static DateRule rule(String key, Map<String, String> site, Map<String, String> tenant) {

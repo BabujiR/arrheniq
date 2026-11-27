@@ -4,13 +4,14 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { Alert, Anchor, Badge, Button, Card, Center, Group, Loader, Modal, SimpleGrid, Stack, Text, Textarea, ThemeIcon, Title, Tooltip } from '@mantine/core';
 import { ApiError } from '../api/http';
 import { keys, productsApi, protocolsApi, specificationsApi } from '../api/masterdata';
+import { studiesApi, studyKeys } from '../api/studies';
 import type { Product, ProductDetails, Signature } from '../api/types';
 import { useSession } from '../auth/SessionProvider';
 import { goToReauth } from '../auth/navigation';
 import { formatInstant, label } from '../components/format';
 import { notifyError, notifySuccess } from '../components/notify';
 import { ReasonModal } from '../components/ReasonModal';
-import { IconArchive, IconCalendar, IconEdit, IconPlus, IconProduct, IconReject, IconSend, IconSignature, IconSpec } from '../components/icons';
+import { IconArchive, IconCalendar, IconEdit, IconPlus, IconProduct, IconReject, IconSend, IconSignature, IconSpec, IconStudy } from '../components/icons';
 import { StatusBadge } from '../components/StatusBadge';
 import { RecordHistory } from '../audit/RecordHistory';
 import { WorkflowStepper } from '../components/WorkflowStepper';
@@ -224,6 +225,7 @@ export function ProductDetailPage() {
 
       <ProductSpecifications productId={p.id} canAdd={can('spec.manage') && p.status !== 'RETIRED'} />
       <ProductProtocols productId={p.id} canAdd={can('protocol.manage') && p.status !== 'RETIRED'} />
+      {can('study.view') && <ProductStudies productId={p.id} canAdd={can('study.create') && p.status === 'APPROVED'} />}
 
       <Card withBorder radius="md" className="arq-fade-in">
         <Group gap="xs" mb="sm">
@@ -414,6 +416,46 @@ function ProductProtocols({ productId, canAdd }: { productId: string; canAdd: bo
                 ) : null}
                 {pr.openStatus && <StatusBadge status={pr.openStatus} />}
               </Group>
+            </Group>
+          ))}
+        </Stack>
+      )}
+    </Card>
+  );
+}
+
+/** The product's studies, newest first, with a shortcut to log in a lot (URS-STU-001). */
+function ProductStudies({ productId, canAdd }: { productId: string; canAdd: boolean }) {
+  const navigate = useNavigate();
+  const studies = useQuery({ queryKey: studyKeys.list({ productId }), queryFn: () => studiesApi.list({ productId }) });
+  return (
+    <Card withBorder radius="md" className="arq-fade-in">
+      <Group justify="space-between" mb="sm">
+        <Group gap="xs">
+          <ThemeIcon size={28} radius="md" variant="light" color="arqIndigo">
+            <IconStudy />
+          </ThemeIcon>
+          <Title order={5}>Studies</Title>
+        </Group>
+        {canAdd && (
+          <Button size="xs" variant="light" leftSection={<IconPlus size={14} />}
+                  onClick={() => void navigate({ to: '/studies/new', search: { productId } })}>
+            Log in study
+          </Button>
+        )}
+      </Group>
+      {studies.data && studies.data.length === 0 ? (
+        <Text size="sm" c="dimmed">
+          No study yet.
+        </Text>
+      ) : (
+        <Stack gap={6}>
+          {studies.data?.slice(0, 10).map((st) => (
+            <Group key={st.id} justify="space-between" wrap="nowrap">
+              <Anchor size="sm" onClick={() => void navigate({ to: '/studies/$studyId', params: { studyId: st.id } })}>
+                {st.studyCode} · lot {st.lotNumber} · {st.conditionLabel}
+              </Anchor>
+              <StatusBadge status={st.status} />
             </Group>
           ))}
         </Stack>
